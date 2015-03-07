@@ -267,7 +267,11 @@ main:
 
 -------
 附：
+执行sed –e ‘/^\s*\./d’ test_main.s > test_main1.s此命令会删除掉以空格和点开头的行，方便阅读。代码清单如下： 
+http://m15934133625.blog.163.com/blog/static/246003087201526102220519/#
 
+objmap
+http://itdreamerchen.com/%E7%90%86%E8%A7%A3c%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/
 
 
 
