@@ -67,7 +67,7 @@ main：
 
 作用是切换到保存上一个栈的栈底，并且将当前栈顶位置设置为栈底
 
-![结构](.\images\1.png)
+![结构](/images/1.png)
 
 
 ```
@@ -83,8 +83,8 @@ main：
 
 相当于 push $1
 
-![结构](.\images\2.png)
-![结构](.\images\3.png)
+![结构](/images/2.png)
+![结构](/images/3.png)
 
 
 ```
@@ -95,7 +95,7 @@ call f 是两步操作构成的
 - 将 f所指向指令的地址放入 eip中
 
 执行完之后，程序就会跳转到f: 指向的命令中执行，此时栈结构如下：
-![结构](.\images\4.png)
+![结构](/images/4.png)
 
 
 f:
@@ -108,7 +108,7 @@ f:
 
 这时候栈结构我们可以发现。栈在逻辑上的划分：！！！函数调用栈
 
-![结构](.\images\5.png)
+![结构](/images/5.png)
 
 ```
 	subl	$4, %esp
@@ -120,12 +120,12 @@ f:
 我们可以发现ebp指向的是我们之前调用f中传入的参数 1 
 所以eax = 1变成了
 
-![结构](.\images\6.png)
+![结构](/images/6.png)
 
 ```
 	call	g
 ```
-![结构](.\images\7.png)
+![结构](/images/7.png)
 
 保存eip，并给eip赋值为g指令的地址，进行跳转
 ```
@@ -135,12 +135,12 @@ f:
 	subl	$3, %eax
 ```
 前两条指令同样是enter操作
-![结构](.\images\8.png)
+![结构](/images/8.png)
 
 ```
 movl	8(%ebp), %eax
 ```
-![结构](.\images\9.png)
+![结构](/images/9.png)
 
 通过栈结构知道 将参数放入eax中
 然后 
@@ -149,12 +149,12 @@ movl	8(%ebp), %eax
 ```
 将eax的值-3并放入eax中
 
-![结构](.\images\10.png)
+![结构](/images/10.png)
 
 ```
 	popl	%ebp
 ```
-![结构](.\images\11.png)
+![结构](/images/11.png)
 可以看到esp指向的上一个函数调用栈的基址
 popl恢复上一个函数调用栈的地址
 
@@ -162,7 +162,7 @@ popl恢复上一个函数调用栈的地址
     ret
 ``` 
 ret 和call相反 popl eip 将esp弹出并赋值给eip
-![结构](.\images\12.png)
+![结构](/images/12.png)
 
 使得程序从上次调用的地方开始执行
 即：
@@ -177,19 +177,19 @@ leave 是和 enter 相反的过程
     movl %ebp,%esp
     popl %ebp
 ```
-![结构](.\images\13.png)
-![结构](.\images\14.png)
+![结构](/images/13.png)
+![结构](/images/14.png)
 
 ebp的值为上一个之前保存的上一个函数调用栈的栈底地址
 最后 ret 回到 main
-![结构](.\images\15.png)
+![结构](/images/15.png)
 main:
 ```
 	addl	$2, %eax
 	leave
 	ret
 ```
-![结构](.\images\16.png)
+![结构](/images/16.png)
 之前的计算我们可以发现都是把结果放在eax里的
 
 所以 可以发现 return的值就保存在这里
@@ -200,7 +200,8 @@ main:
 完成整个程序的执行过程
 
 实验截图：
-![结构](.\images\sy1.png)
+![结构](/images/sy1.png)
+![结构](/images/sy2.png)
 
 -------
 ###四、总结
