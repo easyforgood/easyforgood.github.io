@@ -67,7 +67,7 @@ main：
 
 作用是切换到保存上一个栈的栈底，并且将当前栈顶位置设置为栈底
 
-![结构](.\images\1.png)
+![结构](./images/1.png)
 
 
 ```
@@ -83,8 +83,8 @@ main：
 
 相当于 push $1
 
-![结构](.\images\2.png)
-![结构](.\images\3.png)
+![结构](./images/2.png)
+![结构](./images/3.png)
 
 
 ```
