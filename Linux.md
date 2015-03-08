@@ -1,4 +1,5 @@
 ---
+layout: page
 title: Linux内核分析作业1：
 tagline: X86体系下计算机是如何运行程序
 ---
