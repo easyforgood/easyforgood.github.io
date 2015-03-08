@@ -34,6 +34,8 @@ tagline: X86体系下计算机是如何运行程序
 
 
 [80X86寄存器详解](http://www.cnblogs.com/zhaoyl/archive/2012/05/15/2501972.html)
+
+
 ![结构](/images/r2.png)
 
 ###三、实验代码汇编分析
