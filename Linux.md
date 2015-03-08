@@ -11,6 +11,8 @@ tagline: X86体系下计算机是如何运行程序
 冯诺依曼体系结构就是指存储程序计算机
 
 经典的存储程序计算机由以下五部分组成：
+
+
 ![jiego](http://baike.soso.com/p/20090709/20090709080850-1101162591.jpg)
 
 (其中 实线代表 数据线 虚线代表 控制线)
@@ -54,7 +56,7 @@ $ gcc -S -o main.s main.c -m32
 (这里删除了.long .global .section [节或汇编程序辅助信息](http://blog.csdn.net/jnu_simba/article/details/11747901))
 ```as
 g:
-    pushl	%ebp
+    pushl    %ebp
 	movl	%esp, %ebp
 	movl	8(%ebp), %eax
 	subl	$3, %eax
@@ -80,6 +82,9 @@ main:
 	ret
 
 ```
+
+----
+
 以下是分析：
 
 main：
@@ -95,6 +100,7 @@ main：
 
 作用是切换到保存上一个栈的栈底，并且将当前栈顶位置设置为栈底
 
+栈结构：
 
 ![结构](/images/1.png)
 
@@ -112,8 +118,12 @@ main：
 
 相当于 push $1
 
+栈结构：
+subl    $4, %esp
 
 ![结构](/images/2.png)
+
+movl    $1, (%esp)：
 
 ![结构](/images/3.png)
 
@@ -126,7 +136,9 @@ call f 是两步操作构成的
 - 将 eip 的值入栈。
 - 将 f所指向指令的地址放入 eip中
 
-执行完之后，程序就会跳转到f: 指向的命令中执行，此时栈结构如下：
+执行完之后，程序就会跳转到f: 指向的命令中执行：
+
+栈结构：
 ![结构](/images/4.png)
 
 
@@ -140,6 +152,8 @@ f:
 
 这时候栈结构我们可以发现。栈在逻辑上的划分：！！！函数调用栈
 
+栈结构：main栈和f栈
+
 ![结构](/images/5.png)
 
 ```
@@ -152,12 +166,16 @@ f:
 我们可以发现ebp指向的是我们之前调用f中传入的参数 1 
 所以eax = 1变成了
 
+栈结构：
+
 
 ![结构](/images/6.png)
 
 ```
 	call	g
 ```
+栈结构：
+
 ![结构](/images/7.png)
 
 保存eip，并给eip赋值为g指令的地址，进行跳转
@@ -169,11 +187,16 @@ f:
 ```
 前两条指令同样是enter操作
 
+栈结构：
+
 ![结构](/images/8.png)
 
 ```
 movl	8(%ebp), %eax
 ```
+
+栈结构：
+
 ![结构](/images/9.png)
 
 通过栈结构知道 将参数放入eax中
@@ -183,11 +206,14 @@ movl	8(%ebp), %eax
 ```
 将eax的值-3并放入eax中
 
+栈结构：
+
 ![结构](/images/10.png)
 
 ```
 	popl	%ebp
 ```
+栈结构：
 
 ![结构](/images/11.png)
 
@@ -198,6 +224,8 @@ popl恢复上一个函数调用栈的地址
     ret
 ``` 
 ret 和call相反 popl eip 将esp弹出并赋值给eip
+
+栈结构：
 
 ![结构](/images/12.png)
 
@@ -214,13 +242,18 @@ leave 是和 enter 相反的过程
     movl %ebp,%esp
     popl %ebp
 ```
+栈结构：movl %ebp,%esp
 
 ![结构](/images/13.png)
+
+栈结构：popl %ebp
 
 ![结构](/images/14.png)
 
 ebp的值为上一个之前保存的上一个函数调用栈的栈底地址
 最后 ret 回到 main
+
+栈结构:
 
 ![结构](/images/15.png)
 
@@ -230,6 +263,8 @@ main:
 	leave
 	ret
 ```
+
+栈结构:
 
 ![结构](/images/16.png)
 
@@ -246,6 +281,8 @@ main:
 实验截图：
 
 ![结构](/images/sy1.png)
+
+
 
 ![结构](/images/sy2.png)
 
@@ -269,15 +306,51 @@ main:
 > 1. 这样的就不用给栈和堆划分明显的分界线
 > 2. 由于堆是向上增长的，所以可以充分利用进程的内存空间
 
+等价指令：
+
+call $xxx
+```
+    push eip
+    movl $xxx,eip
+```
+
+ret
+```
+    popl eip
+```
+
+pushl $xxx
+```
+    subl $4,%esp
+    movl $xxx,%esp
+```
+
+enter
+```
+   push %ebp
+   movl %esp,%ebp
+```
+
+leave
+```
+    movl %ebp,%esp
+    popl %ebp
+```
+
+
+
+leave
+
 
 -------
 附：
-执行sed –e ‘/^\s*\./d’ test_main.s > test_main1.s此命令会删除掉以空格和点开头的行，方便阅读。代码清单如下： 
-http://m15934133625.blog.163.com/blog/static/246003087201526102220519/#
 
-objmap
+- [执行sed –e ‘/^\s*\./d’ test_main.s > test_main1.s此命令会删除掉以空格和点开头的行，方便阅读。]( 
+http://m15934133625.blog.163.com/blog/static/246003087201526102220519/#)
+
+- [objdump 反汇编](
 http://itdreamerchen.com/%E7%90%86%E8%A7%A3c%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/
-
+)
 
 
 
