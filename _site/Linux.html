@@ -141,7 +141,8 @@
 <div class="row">
   <div class="col-xs-12">
     
-<h4 id="linuxmoochttpmoocstudy163comcourseustc-1000029000-">（朋翔 原创作品转载请注明出处  《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000 ）</h4>
+<h4 id="linux">朋翔 原创作品转载请注明出处《Linux内核分析》</h4>
+<p>MOOC课程http://mooc.study.163.com/course/USTC-1000029000</p>
 
 <h3 id="section">一、 现代计算机模型—冯诺依曼体系结构</h3>
 
@@ -170,28 +171,30 @@
 <img src="/images/r2.png" alt="结构" /></p>
 
 <h3 id="section-1">三、实验代码汇编分析</h3>
-<p>C语言代码如下：
-<code>c
-int g(int x){
-    return x-3;
+<p>C语言代码如下：</p>
+
+<pre><code>int g(int x){
+	return x-3;
 }
 int f(int x){
-    return g(x);
+	return g(x);
 }
 int main(){
-    return f(1)+2;
+	return f(1)+2;
 }
-</code>
-通过gcc进行编译后生成*.s汇编代码
-<code>sh
-$ gcc -S -o main.s main.c -m32
-</code>
-(注：-m32 代表以32bit为链接库编译 64bit操作系统需要安装<a href="http://andycoder.me/fix-32bug-under-ubuntu1404/">libc6:i386</a> 32位库)</p>
+</code></pre>
+
+<p>通过gcc进行编译后生成*.s汇编代码</p>
+
+<pre><code>$ gcc -S -o main.s main.c -m32
+</code></pre>
+
+<p>(注：-m32 代表以32bit为链接库编译 64bit操作系统需要安装<a href="http://andycoder.me/fix-32bug-under-ubuntu1404/">libc6:i386</a> 32位库)</p>
 
 <p>得到汇编代码main.s:
-(这里删除了.long .global .section <a href="http://blog.csdn.net/jnu_simba/article/details/11747901">节或汇编程序辅助信息</a>)
-```as
-g:
+(这里删除了.long .global .section <a href="http://blog.csdn.net/jnu_simba/article/details/11747901">节或汇编程序辅助信息</a>)</p>
+
+<pre><code>g:
     pushl    %ebp
 	movl	%esp, %ebp
 	movl	8(%ebp), %eax
@@ -215,19 +218,18 @@ main:
 	call	f
 	addl	$2, %eax
 	leave
-	ret</p>
-
-<p>```</p>
+	ret
+</code></pre>
 
 <hr />
 
 <p>以下是分析：</p>
 
-<p>main：
-<code>
-	pushl	%ebp
+<p>main：</p>
+
+<pre><code>	pushl	%ebp
 	movl	%esp, %ebp
-</code></p>
+</code></pre>
 
 <p>这两条指令可以放在一起看 相当于enter</p>
 
@@ -239,11 +241,11 @@ main:
 
 <p><img src="/images/1.png" alt="结构" /></p>
 
-<p><code>
-	subl	$4, %esp
+<pre><code>	subl	$4, %esp
 	movl	$1, (%esp)
-</code>
-这两条指令也可以放在一起看</p>
+</code></pre>
+
+<p>这两条指令也可以放在一起看</p>
 
 <p>在main函数中我们是f(1)+2 吗？这里有个 立即数1 
 我们要如何使用这个参数呢？肯定需要把他放在内存中放在堆栈中</p>
@@ -261,10 +263,10 @@ subl    $4, %esp</p>
 
 <p><img src="/images/3.png" alt="结构" /></p>
 
-<p><code>
-    call f
-</code>
-call f 是两步操作构成的
+<pre><code>    call f
+</code></pre>
+
+<p>call f 是两步操作构成的
 - 将 eip 的值入栈。
 - 将 f所指向指令的地址放入 eip中</p>
 
@@ -273,13 +275,13 @@ call f 是两步操作构成的
 <p>栈结构：
 <img src="/images/4.png" alt="结构" /></p>
 
-<p>f:
-```
-	pushl	%ebp
-	movl	%esp, %ebp</p>
+<p>f:</p>
 
-<p>```
-前两条和main中相同</p>
+<pre><code>	pushl	%ebp
+	movl	%esp, %ebp
+</code></pre>
+
+<p>前两条和main中相同</p>
 
 <p>这时候栈结构我们可以发现。栈在逻辑上的划分：！！！函数调用栈</p>
 
@@ -287,12 +289,12 @@ call f 是两步操作构成的
 
 <p><img src="/images/5.png" alt="结构" /></p>
 
-<p><code>
-	subl	$4, %esp
+<pre><code>	subl	$4, %esp
 	movl	8(%ebp), %eax
 	movl	%eax, (%esp)
-</code>
-关键是这三条指令 通过栈结构 
+</code></pre>
+
+<p>关键是这三条指令 通过栈结构 
 首先是分配一块空的空间 然后
 我们可以发现ebp指向的是我们之前调用f中传入的参数 1 
 所以eax = 1变成了</p>
@@ -301,59 +303,60 @@ call f 是两步操作构成的
 
 <p><img src="/images/6.png" alt="结构" /></p>
 
-<p><code>
-	call	g
-</code>
-栈结构：</p>
+<pre><code>    call	g
+</code></pre>
+
+<p>栈结构：</p>
 
 <p><img src="/images/7.png" alt="结构" /></p>
 
-<p>保存eip，并给eip赋值为g指令的地址，进行跳转
-<code>
-	pushl	%ebp
+<p>保存eip，并给eip赋值为g指令的地址，进行跳转</p>
+
+<pre><code>	pushl	%ebp
 	movl	%esp, %ebp
 	movl	8(%ebp), %eax
 	subl	$3, %eax
-</code>
-前两条指令同样是enter操作</p>
+</code></pre>
+
+<p>前两条指令同样是enter操作</p>
 
 <p>栈结构：</p>
 
 <p><img src="/images/8.png" alt="结构" /></p>
 
-<p><code>
-movl	8(%ebp), %eax
-</code></p>
+<pre><code>    movl	8(%ebp), %eax
+</code></pre>
 
 <p>栈结构：</p>
 
 <p><img src="/images/9.png" alt="结构" /></p>
 
 <p>通过栈结构知道 将参数放入eax中
-然后 
-<code>
-    subl	$3, %eax
-</code>
-将eax的值-3并放入eax中</p>
+然后</p>
+
+<pre><code>    subl	$3, %eax
+</code></pre>
+
+<p>将eax的值-3并放入eax中</p>
 
 <p>栈结构：</p>
 
 <p><img src="/images/10.png" alt="结构" /></p>
 
-<p><code>
-	popl	%ebp
-</code>
-栈结构：</p>
+<pre><code>	popl	%ebp
+</code></pre>
+
+<p>栈结构：</p>
 
 <p><img src="/images/11.png" alt="结构" /></p>
 
 <p>可以看到esp指向的上一个函数调用栈的基址
 popl恢复上一个函数调用栈的地址</p>
 
-<p><code>
-    ret
-</code> 
-ret 和call相反 popl eip 将esp弹出并赋值给eip</p>
+<pre><code>    ret
+</code></pre>
+
+<p>ret 和call相反 popl eip 将esp弹出并赋值给eip</p>
 
 <p>栈结构：</p>
 
@@ -361,18 +364,20 @@ ret 和call相反 popl eip 将esp弹出并赋值给eip</p>
 
 <p>使得程序从上次调用的地方开始执行
 即：
-f:
-<code>
-	leave
+f:</p>
+
+<pre><code>	leave
 	ret
-</code>
-leave 是和 enter 相反的过程
-相当于
-<code>
-    movl %ebp,%esp
+</code></pre>
+
+<p>leave 是和 enter 相反的过程
+相当于</p>
+
+<pre><code>    movl %ebp,%esp
     popl %ebp
-</code>
-栈结构：movl %ebp,%esp</p>
+</code></pre>
+
+<p>栈结构：movl %ebp,%esp</p>
 
 <p><img src="/images/13.png" alt="结构" /></p>
 
@@ -387,12 +392,12 @@ leave 是和 enter 相反的过程
 
 <p><img src="/images/15.png" alt="结构" /></p>
 
-<p>main:
-<code>
-	addl	$2, %eax
+<p>main:</p>
+
+<pre><code>	addl	$2, %eax
 	leave
 	ret
-</code></p>
+</code></pre>
 
 <p>栈结构:</p>
 
@@ -439,36 +444,34 @@ leave 是和 enter 相反的过程
 
 <p>等价指令：</p>
 
-<p>call $xxx
-<code>
-    push eip
+<p>call $xxx</p>
+
+<pre><code>    push eip
     movl $xxx,eip
-</code></p>
+</code></pre>
 
-<p>ret
-<code>
-    popl eip
-</code></p>
+<p>ret</p>
 
-<p>pushl $xxx
-<code>
-    subl $4,%esp
+<pre><code>    popl eip
+</code></pre>
+
+<p>pushl $xxx</p>
+
+<pre><code>    subl $4,%esp
     movl $xxx,%esp
-</code></p>
+</code></pre>
 
-<p>enter
-<code>
-   push %ebp
+<p>enter</p>
+
+<pre><code>   push %ebp
    movl %esp,%ebp
-</code></p>
-
-<p>leave
-<code>
-    movl %ebp,%esp
-    popl %ebp
-</code></p>
+</code></pre>
 
 <p>leave</p>
+
+<pre><code>    movl %ebp,%esp
+    popl %ebp
+</code></pre>
 
 <hr />
 <p>附：</p>
