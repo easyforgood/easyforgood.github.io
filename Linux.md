@@ -1,6 +1,11 @@
-##Linux内核分析作业1：X86体系下计算机是如何运行程序
+---
+layout: page
+title: Linux内核分析作业1：X86体系下计算机是如何运行程序
+tagline: Supporting tagline
+---
+{% include JB/setup %}
 
------
+
 ###一、 现代计算机模型---冯诺依曼体系结构
 
 冯诺依曼体系结构就是指存储程序计算机
