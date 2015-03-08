@@ -5,6 +5,7 @@ tagline: X86体系下计算机是如何运行程序
 ---
 {% include JB/setup %}
 
+####（朋翔 原创作品转载请注明出处  《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000 ）
 
 ###一、 现代计算机模型---冯诺依曼体系结构
 
