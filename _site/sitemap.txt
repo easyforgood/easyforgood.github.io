@@ -1,5 +1,7 @@
 
+http://easyforgood.github.io/Hello.html
 http://easyforgood.github.io/Linux.html
+http://easyforgood.github.io/Linux_2.html
 http://easyforgood.github.io/archive.html
 http://easyforgood.github.io/atom.xml
 http://easyforgood.github.io/categories.html
