@@ -1,11 +1,11 @@
 ---
 layout: page
-title: Linux内核分析作业1：
+title: Linux内核分析作业2：
 tagline: 一个简单的时间片轮转多道程序内核代码
 ---
 {% include JB/setup %}
 
-#
+####朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000 
 
 ---
 github项目：[Mykernel](https://github.com/mengning/mykernel)
