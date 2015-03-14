@@ -347,6 +347,7 @@ mykernel 的制作涉及到了两个问题：
 > - /init/main.c 中的 start_kernel()
 
 #####3.其他细节
+
 > - extern 需要的函数 如：在/arch/x86/kernel/time.c  extern void my_timer_handler(void);
 > - 编写需要的makefile 主要是 /mykernel/Makefile 
 > - 同时还需要修改下根目录下的 总Makefile
