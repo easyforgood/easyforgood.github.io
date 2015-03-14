@@ -232,13 +232,19 @@ typedef struct PCB{
 void my_schedule(void);
 </code></pre>
 
-<p>这里主要是定义了进程控制块的参数。
-参数主要包括了：
-&gt; - pid 进程标识符
-&gt; - state 进程运行状态
-&gt; - thread 进程寄存器的信息 包括了 堆栈sp指针和当前进程指令ip
-&gt; - task_entry 进程运行代码的入口
-&gt; - 下一个进程控制块（进程控制块是以链表的方式组织的）</p>
+<p>这里主要是定义了进程控制块的参数。</p>
+
+<p>参数主要包括了：</p>
+
+<blockquote>
+  <ul>
+    <li>pid 进程标识符</li>
+    <li>state 进程运行状态</li>
+    <li>thread 进程寄存器的信息 包括了 堆栈sp指针和当前进程指令ip</li>
+    <li>task_entry 进程运行代码的入口</li>
+    <li>下一个进程控制块（进程控制块是以链表的方式组织的）</li>
+  </ul>
+</blockquote>
 
 <h4 id="mymainh">2. mymain.h</h4>
 
@@ -498,8 +504,49 @@ ret      要进入下一个进程的执行流时，此时的eip 为 1 标号所�
 <h3 id="section-3">四、补充</h3>
 
 <ul>
-  <li>volatile 限定符 变量放在register中  执行流 取的时候 要放到寄存器 放到内存会有问题</li>
+  <li>volatile 限定符 会把变量放在register中  执行流取的时候 要放到寄存器 放到内存容易出现问题</li>
+  <li>如何 制作整个 mykernel 项目的</li>
 </ul>
+
+<p>mykernel 的制作涉及到了两个问题：</p>
+
+<ol>
+  <li>如何设置时钟中断</li>
+  <li>如何把控制权交给 mymain.c 中的  my_start_kernel</li>
+</ol>
+
+<p>其实两个问题都可以从  <a href="https://github.com/mengning/mykernel/blob/master/mykernel_for_linux3.9.4sc.patch">mykernel_for_linux3.9.4sc.patch</a>
+中找到答案</p>
+
+<p>因为文件比较大 我就不贴出来了。。</p>
+
+<p>直接标记大概修改了那些地方：</p>
+
+<h5 id="section-4">1.和时钟中断有关</h5>
+
+<blockquote>
+  <ul>
+    <li>/arch/x86/kernel/time.c 中的 timer_interrupt（） (时钟中断处理函数 会调用my_timer_handler();)</li>
+  </ul>
+</blockquote>
+
+<h5 id="mymainc">2.和mymain.c相关</h5>
+<blockquote>
+  <ul>
+    <li>/init/main.c 中的 start_kernel()</li>
+  </ul>
+</blockquote>
+
+<h5 id="section-5">3.其他细节</h5>
+
+<blockquote>
+  <ul>
+    <li>extern 需要的函数 如：在/arch/x86/kernel/time.c  extern void my_timer_handler(void);</li>
+    <li>编写需要的makefile 主要是 /mykernel/Makefile</li>
+    <li>同时还需要修改下根目录下的 总Makefile</li>
+    <li>还有README  (^_^)Y</li>
+  </ul>
+</blockquote>
 
   </div>
 </div>

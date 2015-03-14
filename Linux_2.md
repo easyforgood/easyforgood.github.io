@@ -26,10 +26,13 @@ github项目：[Mykernel](https://github.com/mengning/mykernel)
 
 		patch -p1 < ../mykernel_for_linux3.9.4sc.patch
 4. 编译运行 
-			
+
+
 			make allnoconfig
 			make
 			qemu -kernel arch/x86/boot/bzImage
+
+
 
 实验截图：
 
@@ -49,6 +52,10 @@ github项目：[Mykernel](https://github.com/mengning/mykernel)
 ###二、内核代码执行过程
 
 核心代码主要由：mypcb.h 、mymain.c、myinterrupt.c三个文件构成
+
+
+
+
 
 ####1. mypcb.h
 
@@ -74,7 +81,10 @@ github项目：[Mykernel](https://github.com/mengning/mykernel)
 	void my_schedule(void);
 
 这里主要是定义了进程控制块的参数。
+
 参数主要包括了：
+
+
 > - pid 进程标识符
 > - state 进程运行状态
 > - thread 进程寄存器的信息 包括了 堆栈sp指针和当前进程指令ip
