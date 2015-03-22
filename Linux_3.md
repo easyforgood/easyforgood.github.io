@@ -130,7 +130,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 <div style="margin:0 auto;text-align:center;width:100%">
 
-<img src="./linux3/start1.png"  />
+<img src="./linux3/start1.gif"  />
 
 </div>
 
