@@ -11,12 +11,12 @@ tagline: 跟踪分析Linux内核的启动过程
 
 ###一、实验步骤整理
 
-1. 下载Linux-3.18.6
+1.下载Linux-3.18.6
 	
 	[Linux-3.18.6.tar.xz下载地址](https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.6.tar.xz)
 	
 
-2. 解压Linux
+2.解压Linux
 
 		xz -d linux-3.18.6.tar.xz
 		tar -xvf linux-3.18.6.tar
@@ -26,7 +26,7 @@ tagline: 跟踪分析Linux内核的启动过程
 ![enter image description here](./linux3/lab3_1.png)
 
 
-3. 设置编译选项并编译内核
+3.设置编译选项并编译内核
 
 设置成i386的配置：
 		
@@ -69,7 +69,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 解决方法：直接把窗口最大化就行了！
 
-4. 制作根文件系统
+4.制作根文件系统
 
 		cd ~/LinuxKernel/
 		mkdir rootfs
@@ -83,7 +83,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 （注：最后一步实际上是有三个部分组成 find命令 和cpio命令和 gzip命令 cpio是备份归档的命令，gzip是压缩）
 
-5.  运行menuOS 并进行设置调试
+5.运行menuOS 并进行设置调试
 
 启动：
 
