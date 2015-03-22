@@ -143,21 +143,21 @@ start_kernel 的主要功能是
 
 这一块的代码相当复杂，直接mark下基本的：
 
-tick_init();  //时钟源初始化
+- tick_init();  //时钟源初始化
 
-setup_arch（）; //最后一点和体系结构相关的初始化，开启mmu，初始化内存结构段表，页表啥的
+- setup_arch（）; //最后一点和体系结构相关的初始化，开启mmu，初始化内存结构段表，页表啥的
 
-init_IRQ（）; //对中断向量表的初始化
+- init_IRQ（）; //对中断向量表的初始化
 
-trap_init（）；//进一步初始化硬件中断，主要是中断链表，中断处理函数
+- trap_init（）；//进一步初始化硬件中断，主要是中断链表，中断处理函数
 
-sched_init（） //和进程调度相关的初始化
+- sched_init（） //和进程调度相关的初始化
 
-time_init（）//定时器的初始化
+- time_init（）//定时器的初始化
 
-console_init（）  //终端初始化，tty
+- console_init（）  //终端初始化，tty
 
-vfs_caches_init_early(); //虚拟文件系统初始化，后面挂载根文件系统用
+- vfs_caches_init_early(); //虚拟文件系统初始化，后面挂载根文件系统用
 
 主要分析下 rest_init()
 
@@ -182,25 +182,27 @@ vfs_caches_init_early(); //虚拟文件系统初始化，后面挂载根文件�
 		cpu_startup_entry(CPUHP_ONLINE);
 	}
 
-rcu\_scheduler_starting（）
+ **rcu\_scheduler_starting（） **
 
 看了解释，这个函数是完成schedule最后的初始化工作，就是打开对RCU锁的检测，因为后面也会用到。RCU是一个高性能的读写锁，具体的请参考：[Linux 2.6内核中新的锁机制--RCU](https://www.ibm.com/developerworks/cn/linux/l-rcu/)
 
-kernel_thread(kernel_init, NULL, CLONE_FS);
+ **kernel_thread(kernel_init, NULL, CLONE_FS); **
 
 
 启动一个内核线程，这个内核线程的执行体是kernel_init（）
 
-他的第一句话就是kernel_init_freeable(void) 中的wait_for_completion(&kthreadd_done);
+他的第一句话就是kernel_init_freeable(void) 中的
+
+ **wait_for_completion(&kthreadd_done); **
 
 意思是需要等待kthreadd_done这个信号量释放，在之后的代码中才会释放。因此我们先往下看
 
-numa_default_policy();
+ **numa_default_policy(); **
 
 设定NUMA系统的内存访问策略为默认
 这里的NUMA 是[非均匀访存模型](https://zh.wikipedia.org/wiki/%E9%9D%9E%E5%9D%87%E5%8C%80%E8%AE%BF%E5%AD%98%E6%A8%A1%E5%9E%8B)，目测和SMP有关
 
-pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES);
+ **pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES); **
 
 
 这里又会创建一个[kthreadd](http://blog.csdn.net/lchjustc/article/details/6910663)内核线程，这个线程首先会根据kthread_create_list 循环创建其他内核线程，然后会通过该线程管理和调度别的内核线程（貌似又被称为worker_thread,好像还和中断处理的下半部分有关了，mark下回头看）
@@ -212,7 +214,7 @@ pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES);
 
 这就是可以理解为将threadd根据kthread_create_list初始化的内核线程链表赋值给kthreadd_task
 
-kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
+ **kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns); **
 
 作用是通过pid来查找其对应的task_struct的结构体 
 可以猜到 task_struct肯定是链表
@@ -223,19 +225,20 @@ kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
 	schedule_preempt_disabled();  //关调度抢占
 	cpu_startup_entry(CPUHP_ONLINE);
 
-init_idle_bootup_task(current);   将当前进程也就是0号进程init_task 的[sched_class](http://home.ustc.edu.cn/~hchunhui/linux_sched.html) 设置成 idle 大概意思应该是调度时机为idle，即cpu空闲时调度
+ **init_idle_bootup_task(current);  **  将当前进程也就是0号进程init_task 的[sched_class](http://home.ustc.edu.cn/~hchunhui/linux_sched.html) 设置成 idle 大概意思应该是调度时机为idle，即cpu空闲时调度
 
-cpu_startup_entry(CPUHP_ONLINE);
+ **cpu_startup_entry(CPUHP_ONLINE); **
 
 这个老师分析过了。最后会进入/linux-3.18.6/kernel/sched/idle.c 中的
-static void cpu_idle_loop(void) 这是一个死循环。
+**static void cpu_idle_loop(void) **
+这是一个死循环。
 init_task完全堕落成0号进程了。
 
 回到之前的 kernel_init 
 
 前面会进行很多初始化工作，内存的，SMP的，锁检测的。
 
-比较重要的是do_basic_setup();  里面涉及到了一系列驱动程序的加载 
+比较重要的是 **do_basic_setup() **;  里面涉及到了一系列驱动程序的加载 
 
 之后会进行一系列复杂的根文件系统加载工作，先创建虚拟文件系统rootfs，然后根据不同的文件系统类型和格式，会有不同的加载根文件系统。
 
