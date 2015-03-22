@@ -13,7 +13,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 ####1.下载Linux-3.18.6
 	
-	[Linux-3.18.6.tar.xz下载地址](https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.6.tar.xz)
+[Linux-3.18.6.tar.xz下载地址](https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.6.tar.xz)
 	
 
 ####2.解压Linux
@@ -87,7 +87,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 启动：
 
-		qemu -kernel linux-3.18.6/arch/x86/boot/bzImage -initrd rootfs.img
+	qemu -kernel linux-3.18.6/arch/x86/boot/bzImage -initrd rootfs.img
 		
 运行截图：
 
@@ -95,7 +95,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 启动调试：
 
-		qemu -kernel linux-3.18.6/arch/x86/boot/bzImage -initrd rootfs.img -s -S
+	qemu -kernel linux-3.18.6/arch/x86/boot/bzImage -initrd rootfs.img -s -S
 
 注：
 
@@ -119,7 +119,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 截图：
 	
-	![enter image description here](./linux3/lab3_7.png)	
+![enter image description here](./linux3/lab3_7.png)	
 	
 
 
