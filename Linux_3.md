@@ -124,7 +124,7 @@ tagline: 跟踪分析Linux内核的启动过程
 
 ###二、启动过程分析
 
-<div style="margin:0 auto;">
+<div style="margin:0 auto;width:800px;">
 <img src="./linux3/lab3_7.png" />
 </div>
 
