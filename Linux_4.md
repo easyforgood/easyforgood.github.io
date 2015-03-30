@@ -157,7 +157,7 @@ SAVE_ALL 的实现在文件最开始的地方：
 
 （**注：这里无意中发现了  jmp restore_all之前会进行jne work_pending，这里会设置need_resched 判断调度！**）
 
-然后发现RESTORE_ALL 这个宏实际上是存在的！老师骗人。！
+然后发现**RESTORE_ALL** 这个宏实际上是不存在的！
 
 **restore_all** 只执行了 TRACE_IRQS_IRET 用来判断中断是否关闭，若是关闭便打开
 
