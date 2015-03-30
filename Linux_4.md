@@ -52,7 +52,7 @@ tagline: 两种方式使用同一个系统调用
 
 ###二、 关于系统调用
 
-1.软中断 中断 和系统调用
+####1.软中断 中断 和系统调用
 
 首先系统调用是一种特殊的中断，是程序或者说是用户主动进行向内核请求服务的
 
@@ -63,7 +63,8 @@ tagline: 两种方式使用同一个系统调用
 但是我之前一直没分清楚软中断和系统调用的区别,
 我又查了一下，觉得可能是这样的。
 
-软中断是一种机制，由程序主动申请来访问内核的服务，让内核帮助处理一些操作。
+软中断是一种机制，由软件模拟中断**信号**主动申请来访问内核的服务，让内核帮助处理一些操作。
+
 
 系统调用是一种具体的实现，可以由用户主动发出。
 
@@ -72,7 +73,7 @@ tagline: 两种方式使用同一个系统调用
 中断下半段的处理也是通过软中断实现的，通过ksoftirqd内核线程去处理未完成的操作
 
 
-2.系统调用的过程（源码分析）
+####2.系统调用的过程（源码分析）
 
 在/linux-3.18.6/arch/x86/kernel/traps.c中 有系统调用的初始化：
 
@@ -80,7 +81,7 @@ tagline: 两种方式使用同一个系统调用
 
 调用trap_init()就会执行到这里。其中SYSCALL_VECTOR  = 0x80 因此我们就是通过 INT  0x80触发系统调用的。
 
-系统调用时的处理函数是asmlinkage int system_call(void);
+系统调用时的处理函数是**asmlinkage int system_call(void);**
 
  system_call 具体的实现在内核加载的时候就已经加载到内存中了。
 
@@ -113,11 +114,11 @@ tagline: 两种方式使用同一个系统调用
 
 实现可以分为三步看：
 
-####1.保存现场，通用寄存器
+**1.保存现场，通用寄存器**
 	
 在硬件做完对 esp，eip ，eflags保存之后
 
-我们可以清晰的看到 linux system_call 对 其他寄存器的保存 ---- SAVE_ALL
+我们可以清晰的看到 linux system_call 对 其他寄存器的保存 ---- **SAVE_ALL**
 
 SAVE_ALL 的实现在文件最开始的地方：
 
@@ -135,7 +136,7 @@ SAVE_ALL 的实现在文件最开始的地方：
 	pushl_cfi %ebp 
 	....(省略)
 	
-####2.获取系统调用号（没注意到参数在哪里获取？）
+**2.获取系统调用号（没注意到参数在哪里获取？）**
 
 	cmpl $(NR_syscalls), %eax 
 
@@ -145,21 +146,21 @@ SAVE_ALL 的实现在文件最开始的地方：
 
 通过系统调用表跳转到具体的系统调用
 
-####3.恢复现场
+**3.恢复现场**
 	syscall_exit:jne syscall_exit_work
 
-跳转到 syscall_exit_work 处理
-最后一句是跳转到 jmp resume_userspace 
+跳转到 **syscall_exit_work** 处理
+最后一句是跳转到 jmp **resume_userspace** 
 
-resume_userspace 最后一句是jmp restore_all 
+**resume_userspace** 最后一句是jmp **restore_all** 
 
 （**注：这里无意中发现了  jmp restore_all之前会进行jne work_pending，这里会设置need_resched 判断调度！**）
 
 然后发现RESTORE_ALL 这个宏实际上是存在的！老师骗人。！
 
-restore_all 只执行了 TRACE_IRQS_IRET 用来判断中断是否关闭，若是关闭便打开
+**restore_all** 只执行了 TRACE_IRQS_IRET 用来判断中断是否关闭，若是关闭便打开
 
-然后执行 restore_all_notrace: 中的 **RESTORE_REGS**  4
+然后顺序执行 **restore_all_notrace:** 关键的 **RESTORE_REGS**  4
 
 这才是真正的恢复现场！
 
@@ -186,9 +187,9 @@ restore_all 只执行了 TRACE_IRQS_IRET 用来判断中断是否关闭，若是
 	
 over		
 	
-先扒皮到这里。还有很多比如说如何传参以及如何找到具体的系统调用函数等等问题还没有解决。
+先扒皮到这里。还有很多比如说**如何传参**以及如何**找到具体的系统调用函数**等等问题还没有解决。
 
-3.API函数的实现
+####3.API函数的实现
 
 简要说明下：
 
@@ -203,3 +204,7 @@ linux-3.18.6/arch/x86/syscalls/syscall_32.tbl 找到对应的系统调用处理�
 
 
 具体请看：Linux系统调用之SYSCALL_DEFINE(http://blog.csdn.net/hxmhyp/article/details/22699669)
+
+###三、总结
+
+三层皮只是系统调用通过API实现的时候才会有的，封装例程包装了系统调用。但是实际上我们用内嵌汇编实现，和三层皮是没什么关系的。
