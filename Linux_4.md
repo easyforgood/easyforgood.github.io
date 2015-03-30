@@ -79,7 +79,7 @@ tagline: 两种方式使用同一个系统调用
 
 		set_system_trap_gate(SYSCALL_VECTOR, &system_call);
 
-调用trap_init()就会执行到这里。其中SYSCALL_VECTOR  = 0x80 因此我们就是通过 INT  0x80触发系统调用的。
+调用**trap_init()**就会执行到这里。其中**SYSCALL_VECTOR  = 0x80** 因此我们就是通过 INT  0x80触发系统调用的。
 
 系统调用时的处理函数是**asmlinkage int system_call(void);**
 
