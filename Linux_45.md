@@ -9,7 +9,56 @@ tagline: 两种方式使用同一个系统调用
 
 
 
-<h4>注：因为这次作业和上次作业写重复了。所以我就补充说明一下下。</h4>
+<h4>注：因为这次作业和上次作业写重复了。所以我就补充说明一下。全部写在前面了。</h4>
+
+API实现的系统调用流程图：
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux5/lab1.png"  />
+
+</div>
+
+具体的系统调用处理过程：
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux5/lab2.png"  />
+
+</div>
+
+两个小问题：
+
+- 是如何找到系统调用处理函数的？
+
+中断门。
+
+在trap_init（）
+里面有一句 set_system_trap_gate(SYSCALL_VECTOR, &system_call);
+
+设置系统中断门。
+
+这里会形成IDT表项。
+
+里面记录了系统段的选择子以及偏移量。
+
+并且IDT具体的服务函数是和根据中断号相关的。
+
+通过IDT基地址+8*中断号
+
+然后找到中断服务函数（例如：system_call ）
+
+- 参数传递
+
+SYSCALL_DEFINEx
+
+例如调用 getpid()
+
+SYSCALL_DEFINE0(getpid)
+
+这里x就是参数个数。
+
+为什么要这样解释是他要做一些参数格式的转换。
 
 
 
@@ -152,7 +201,7 @@ SAVE_ALL 的实现在文件最开始的地方：
 
 通过系统调用表跳转到具体的系统调用
 
-**3.恢复现场**
+**3.恢复现场并退出中断**
 
 	syscall_exit:jne syscall_exit_work
 
@@ -194,7 +243,7 @@ SAVE_ALL 的实现在文件最开始的地方：
 	
 over		
 	
-先扒皮到这里。还有很多比如说**如何传参**以及如何**找到具体的系统调用函数**等等问题还没有解决。
+
 
 ####3.API函数的实现
 
