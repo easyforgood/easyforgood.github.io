@@ -111,6 +111,15 @@ exec_binprm() -> search_binary_handler ()
 
 在load_elf_binary 中主要是找到elf_entry和bprm->p
 
+> 如果应用程序中使用了动态链接库，就没有那么简单了，内核除了加载指定的可执
+> 行文件，还要把控制权交给动态连接器(program interpreter，ld.so in linux)以处理动态
+> 链接的程序。内核搜寻段表，找到标记为PT_INTERP的段中所对应的动态连接器的
+> 名称，并使用load_elf_interp()加载其映像，并把返回的入口地址设置成load_elf_interp
+> ()的返回值，即动态链接器入口。当execve退出的时候动态链接器接着运行。动态连
+> 接器检查应用程序对共享连接库的依赖性，并在需要时对其进行加载,对程序的外部
+> 引用进行重定位。然后动态连接器把控制权交给应用程序，从ELF文件头部中定义
+> 的程序进入点开始执行。
+
 一个是new_ip 一个是new_sp
 
 最后调用 start_thread()
