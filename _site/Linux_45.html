@@ -1,0 +1,468 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Linux内核分析作业4：</title>
+    
+    <meta name="author" content="siplexy">
+
+    <!-- Enable responsive viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap styles -->
+    <link href="/assets/themes/bootstrap-3/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+   <!--  <link href="/assets/themes/bootstrap-3/css/prettify.css" rel="stylesheet"> -->
+   <link rel="stylesheet" href="/assets/themes/bootstrap-3/css/zenburn.css">
+    <!-- Optional theme -->
+    <link href="/assets/themes/bootstrap-3/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet">
+    <!-- Sticky Footer -->
+    <link href="/assets/themes/bootstrap-3/bootstrap/css/bs-sticky-footer.css" rel="stylesheet">
+    
+    <!-- Custom styles -->
+    <link href="/assets/themes/bootstrap-3/css/style.css?body=1" rel="stylesheet" type="text/css" media="all">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <!-- Update these with your own images
+      <link rel="shortcut icon" href="images/favicon.ico">
+      <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+      <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+    -->
+
+    <!-- atom & rss feed -->
+    <link href="/atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed">
+    <link href="/rss.xml" type="application/rss+xml" rel="alternate" title="Sitewide RSS Feed">
+
+  </head>
+
+  <body>
+    <div id="wrap">
+      <nav class="navbar navbar-default" role="navigation">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#jb-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">Sip 桑 的 Blog~ ^。^</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="jb-navbar-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+            
+
+
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/archive.html">Archive</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/categories.html">Categories</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/pages.html">Pages</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/tags.html">Tags</a></li>
+      	
+      
+    
+  
+
+
+
+          </ul>
+          <form class="navbar-form navbar-right" role="search">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Search">
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+          </form>
+        </div><!-- /.navbar-collapse -->
+      </nav>
+
+      <div class="container">
+        
+<div class="page-header">
+  <h1>Linux内核分析作业4：  <small>两种方式使用同一个系统调用</small></h1>
+</div>
+
+<div class="row">
+  <div class="col-xs-12">
+    <h4>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</h4>
+
+<h4>注：因为这次作业和上次作业写重复了。所以我就补充说明一下。全部写在前面了。</h4>
+
+<p>API实现的系统调用流程图：</p>
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux5/lab1.png"  />
+
+</div>
+
+<p>具体的系统调用处理过程：</p>
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux5/lab2.png"  />
+
+</div>
+
+<p>两个小问题：</p>
+
+<ul>
+<li>是如何找到系统调用处理函数的？</li>
+</ul>
+
+<p>中断门。</p>
+
+<p>在trap<em>init（）
+里面有一句 set</em>system<em>trap</em>gate(SYSCALL<em>VECTOR, &amp;system</em>call);</p>
+
+<p>设置系统中断门。</p>
+
+<p>这里会形成IDT表项。</p>
+
+<p>里面记录了系统段的选择子以及偏移量。</p>
+
+<p>并且IDT具体的服务函数是和根据中断号相关的。</p>
+
+<p>通过IDT基地址+8*中断号</p>
+
+<p>然后找到中断服务函数（例如：system_call ）</p>
+
+<ul>
+<li>参数传递</li>
+</ul>
+
+<p>SYSCALL_DEFINEx</p>
+
+<p>例如调用 getpid()</p>
+
+<p>SYSCALL_DEFINE0(getpid)</p>
+
+<p>这里x就是参数个数。</p>
+
+<p>为什么要这样解释是他要做一些参数格式的转换。</p>
+
+<h3>一、 过程整理</h3>
+
+<p>我这里使用的系统调用是getpid() 用于获取当前的进程id，系统调用号是20（0x14）</p>
+
+<p>直接截图：</p>
+
+<ul>
+<li>使用库函数进行系统调用：</li>
+</ul>
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux4/lab1.png"  />
+
+</div>
+
+<p>运行:</p>
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux4/lab2.png"  />
+
+</div>
+
+<ul>
+<li>使用内嵌汇编系统调用：</li>
+</ul>
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux4/lab3.png"  />
+
+</div>
+
+<p>运行：</p>
+
+<div style="margin:0 auto;text-align:center;width:100%">
+
+<img src="./linux4/lab4.png"  />
+
+</div>
+
+<p>（注：这里获取的pid是肯定不一样的，因为每次运行程序都会分配一个）</p>
+
+<h3>二、 关于系统调用</h3>
+
+<h4>1.软中断 中断 和系统调用</h4>
+
+<p>首先系统调用是一种特殊的中断，是程序或者说是用户主动进行向内核请求服务的</p>
+
+<p>硬件中断是一种电信号，当设备有某种事件发生时，它就会产生中断，通过总线把电信号发送给中断控制器。
+如果中断的线是激活的，中断控制器就把电信号发送给处理器的某个特定引脚。处理器于是立即停止自己正在做的事，
+跳到中断处理程序的入口点，进行中断处理。</p>
+
+<p>但是我之前一直没分清楚软中断和系统调用的区别,
+我又查了一下，觉得可能是这样的。</p>
+
+<p>软中断是一种机制，由软件模拟中断<strong>信号</strong>主动申请来访问内核的服务，让内核帮助处理一些操作。</p>
+
+<p>系统调用是一种具体的实现，可以由用户主动发出。</p>
+
+<p>程序异常也是一种软中断，比如说缺页异常。</p>
+
+<p>中断下半段的处理也是通过软中断实现的，通过ksoftirqd内核线程去处理未完成的操作</p>
+
+<h4>2.系统调用的过程（源码分析）</h4>
+
+<p>在/linux-3.18.6/arch/x86/kernel/traps.c中 有系统调用的初始化：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">    set_system_trap_gate(SYSCALL_VECTOR, &amp;system_call);
+</code></pre></div>
+<p>调用<strong>trap_init()</strong>就会执行到这里。其中<strong>SYSCALL_VECTOR  = 0x80</strong> 因此我们就是通过 INT  0x80触发系统调用的。</p>
+
+<p>系统调用时的处理函数是<strong>asmlinkage int system_call(void);</strong></p>
+
+<p>system_call 具体的实现在内核加载的时候就已经加载到内存中了。</p>
+
+<p>在/linux-3.18.6/arch/x86/kernel/entry<em>32.S 中 有system</em>call的实现：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">ENTRY(system_call)
+...
+
+SAVE_ALL
+
+....
+
+cmpl $(NR_syscalls), %eax
+...
+syscall_call:
+    call *sys_call_table(,%eax,4)
+syscall_after_call:
+    ....
+syscall_exit:jne syscall_exit_work
+    ....
+
+restore_all:
+    TRACE_IRQS_IRET
+restore_all_notrace:
+.....
+restore_nocheck:
+    RESTORE_REGS 4          # skip orig_eax/error_code
+...
+ENDPROC(system_call)
+</code></pre></div>
+<p>实现可以分为三步看：</p>
+
+<p><strong>1.保存现场，通用寄存器</strong></p>
+
+<p>在硬件做完对 esp，eip ，eflags保存之后</p>
+
+<p>我们可以清晰的看到 linux system<em>call 对 其他寄存器的保存 ---- **SAVE</em>ALL**</p>
+
+<p>SAVE_ALL 的实现在文件最开始的地方：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">.macro SAVE_ALL
+cld
+PUSH_GS
+pushl_cfi %fs
+/*CFI_REL_OFFSET fs, 0;*/
+pushl_cfi %es
+/*CFI_REL_OFFSET es, 0;*/
+pushl_cfi %ds
+/*CFI_REL_OFFSET ds, 0;*/
+pushl_cfi %eax
+CFI_REL_OFFSET eax, 0
+pushl_cfi %ebp 
+....(省略)
+</code></pre></div>
+<p><strong>2.获取系统调用号（没注意到参数在哪里获取？）</strong></p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">cmpl $(NR_syscalls), %eax 
+</code></pre></div>
+<p>应该是比较系统调用号看是否存在吧</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">call *sys_call_table(,%eax,4)
+</code></pre></div>
+<p>通过系统调用表跳转到具体的系统调用</p>
+
+<p><strong>3.恢复现场并退出中断</strong></p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">syscall_exit:jne syscall_exit_work
+</code></pre></div>
+<p>跳转到 <strong>syscall<em>exit</em>work</strong> 处理
+最后一句是跳转到 jmp <strong>resume_userspace</strong> </p>
+
+<p><strong>resume_userspace</strong> 最后一句是jmp <strong>restore_all</strong> </p>
+
+<p>（<strong>注：这里无意中发现了  jmp restore<em>all之前会进行jne work</em>pending，这里会设置need_resched 判断调度！</strong>）</p>
+
+<p>然后发现<strong>RESTORE_ALL</strong> 这个宏实际上是不存在的！</p>
+
+<p><strong>restore_all</strong> 只执行了 TRACE<em>IRQS</em>IRET 用来判断中断是否关闭，若是关闭便打开</p>
+
+<p>然后顺序执行 <strong>restore<em>all</em>notrace:</strong> 关键的 <strong>RESTORE_REGS</strong>  4</p>
+
+<p>这才是真正的恢复现场！</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">.macro RESTORE_INT_REGS
+    popl_cfi %ebx
+    CFI_RESTORE ebx
+    popl_cfi %ecx
+    CFI_RESTORE ecx
+    popl_cfi %edx
+    CFI_RESTORE edx
+    popl_cfi %esi
+    CFI_RESTORE esi
+    popl_cfi %edi
+    CFI_RESTORE edi
+    popl_cfi %ebp
+    CFI_RESTORE ebp
+    popl_cfi %eax
+    CFI_RESTORE eax
+.endm
+.macro RESTORE_REGS pop=0
+    RESTORE_INT_REGS
+...
+</code></pre></div>
+<p>over        </p>
+
+<h4>3.API函数的实现</h4>
+
+<p>简要说明下：</p>
+
+<p>所有api函数都可以在
+linux-3.18.6/arch/x86/syscalls/syscall<em>32.tbl 找到对应的系统调用处理函数
+如：reboot - &gt; sys</em>reboot</p>
+
+<p>这些函数的绝大多数实现都在linux-3.18.6/kernel/sys.c</p>
+
+<p>之前系统调用在内核中的入口也都是sys<em>xxx
+现在都改为SYSCALL</em>DEFINE定义的了</p>
+
+<p>具体请看：Linux系统调用之SYSCALL_DEFINE(http://blog.csdn.net/hxmhyp/article/details/22699669)</p>
+
+<h3>三、总结</h3>
+
+<p>三层皮只是系统调用通过API实现的时候才会有的，封装例程包装了系统调用。但是实际上我们用内嵌汇编实现，和三层皮是没什么关系的。</p>
+
+  </div>
+</div>
+
+
+
+
+      </div>
+
+    <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="" data-title="Sip 桑 的 Blog~ ^。^" data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"easyforgood"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+     || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+  </script>
+<!-- 多说公共JS代码 end -->
+
+
+    </div>
+
+    <div id="footer">
+      <div class="container">
+        <p>&copy; 2015 siplexy
+          with help from <a href="http://jekyllbootstrap.com" target="_blank" title="The Definitive Jekyll Blogging Framework">Jekyll Bootstrap</a>
+          and <a href="http://twitter.github.com/bootstrap/" target="_blank">Twitter Bootstrap</a>
+        </p>
+      </div>
+    </div>
+
+    
+
+
+    <!-- Latest compiled and minified JavaScript, requires jQuery 1.x (2.x not supported in IE8) -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="/assets/themes/bootstrap-3/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/assets/themes/bootstrap-3/js/prettify.js"></script>
+    <script src="/assets/themes/bootstrap-3/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+  </body>
+</html>
+
+
+

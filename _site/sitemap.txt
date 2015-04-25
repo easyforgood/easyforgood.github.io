@@ -2,6 +2,10 @@
 http://easyforgood.github.io/Hello.html
 http://easyforgood.github.io/Linux.html
 http://easyforgood.github.io/Linux_2.html
+http://easyforgood.github.io/Linux_3.html
+http://easyforgood.github.io/Linux_45.html
+http://easyforgood.github.io/Linux_6.html
+http://easyforgood.github.io/Linux_7.html
 http://easyforgood.github.io/archive.html
 http://easyforgood.github.io/atom.xml
 http://easyforgood.github.io/categories.html
@@ -11,4 +15,7 @@ http://easyforgood.github.io/rss.xml
 http://easyforgood.github.io/sitemap.txt
 http://easyforgood.github.io/tags.html
 
+http://easyforgood.github.io/2015/04/20/Linux
+http://easyforgood.github.io/2015/04/20/Linux
+http://easyforgood.github.io/2015/02/04/nodejs%20event
 http://easyforgood.github.io/lessons/2011/12/29/jekyll-introduction

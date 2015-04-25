@@ -82,6 +82,22 @@
   
     
       
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
       	
       	<li><a href="/archive.html">Archive</a></li>
       	
@@ -149,109 +165,94 @@
 
 <div class="row">
   <div class="col-xs-12">
-    
-<h4 id="linuxmoochttpmoocstudy163comcourseustc-1000029000">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</h4>
+    <h4>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</h4>
 
-<hr />
+<hr>
+
 <p>github项目：<a href="https://github.com/mengning/mykernel">Mykernel</a></p>
 
-<h3 id="section">一、步骤整理</h3>
+<h3>一、步骤整理</h3>
 
-<p>请先在下载好<a href="https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.9.4.tar.xz">linux-3.9.4.tar.xz</a></p>
+<p>请先在下载好<a href="https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.9.4.tar.xz">linux-3.9.4.tar.xz</a> </p>
 
 <ol>
-  <li>
-    <p>安装 qemu</p>
-
-    <pre><code> sudo apt-get install qemu # install QEMU
- sudo ln -s /usr/bin/qemu-system-i386 /usr/bin/qemu
-</code></pre>
-  </li>
-  <li>
-    <p>解压 linux</p>
-
-    <pre><code> xz -d linux-3.9.4.tar.xz
- tar -xvf linux-3.9.4.tar
-</code></pre>
-  </li>
-  <li>
-    <p>打内核补丁  <a href="https://github.com/mengning/mykernel/blob/master/mykernel_for_linux3.9.4sc.patch">mykernel_for_linux3.9.4sc.patch</a></p>
-
-    <pre><code> patch -p1 &lt; ../mykernel_for_linux3.9.4sc.patch
-</code></pre>
-  </li>
-  <li>
-    <p>编译运行</p>
-
-    <pre><code>     make allnoconfig
-     make
-     qemu -kernel arch/x86/boot/bzImage
-</code></pre>
-  </li>
+<li><p>安装 qemu</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">sudo apt-get install qemu # install QEMU
+sudo ln -s /usr/bin/qemu-system-i386 /usr/bin/qemu
+</code></pre></div></li>
+<li><p>解压 linux</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">xz -d linux-3.9.4.tar.xz
+tar -xvf linux-3.9.4.tar
+</code></pre></div></li>
+<li><p>打内核补丁  <a href="https://github.com/mengning/mykernel/blob/master/mykernel_for_linux3.9.4sc.patch">mykernel<em>for</em>linux3.9.4sc.patch</a></p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">patch -p1 &lt; ../mykernel_for_linux3.9.4sc.patch
+</code></pre></div></li>
+<li><p>编译运行 </p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">    make allnoconfig
+    make
+    qemu -kernel arch/x86/boot/bzImage
+</code></pre></div></li>
 </ol>
 
 <p>实验截图：</p>
 
-<p><img src="/linux2/lab2_1.png" alt="enter image description here" /></p>
+<p><img src="/linux2/lab2_1.png" alt="enter image description here"></p>
 
-<p><img src="/linux2/lab2_2.png" alt="enter image description here" /></p>
+<p><img src="/linux2/lab2_2.png" alt="enter image description here"></p>
 
-<p><img src="/linux2/lab2_3.png" alt="enter image description here" /></p>
+<p><img src="/linux2/lab2_3.png" alt="enter image description here"></p>
 
 <ol>
-  <li>将 mypcb.h 、mymain.c、myinterrupt.c 放入mykernel 文件夹 并编译运行</li>
+<li>将 mypcb.h 、mymain.c、myinterrupt.c 放入mykernel 文件夹 并编译运行 </li>
 </ol>
 
-<p><img src="/linux2/lab2_4.png" alt="enter image description here" /></p>
+<p><img src="/linux2/lab2_4.png" alt="enter image description here"></p>
 
-<h3 id="section-1">二、内核代码执行过程</h3>
+<h3>二、内核代码执行过程</h3>
 
 <p>核心代码主要由：mypcb.h 、mymain.c、myinterrupt.c三个文件构成</p>
 
-<h4 id="mypcbh">1. mypcb.h</h4>
-
-<pre><code>#define MAX_TASK_NUM        4
+<h4>1. mypcb.h</h4>
+<div class="highlight"><pre><code class="language-text" data-lang="text">#define MAX_TASK_NUM        4
 #define KERNEL_STACK_SIZE   1024*8
 
 /* CPU-specific state of this task */
 struct Thread {
-    unsigned long		ip;
-    unsigned long		sp;
+    unsigned long       ip;
+    unsigned long       sp;
 };
 
 typedef struct PCB{
     int pid;
-    volatile long state;	/* -1 unrunnable, 0 runnable, &gt;0 stopped */
+    volatile long state;    /* -1 unrunnable, 0 runnable, &gt;0 stopped */
     char stack[KERNEL_STACK_SIZE];
     /* CPU-specific state of this task */
     struct Thread thread;
-    unsigned long	task_entry;
+    unsigned long   task_entry;
     struct PCB *next;
 }tPCB;
 
 void my_schedule(void);
-</code></pre>
-
+</code></pre></div>
 <p>这里主要是定义了进程控制块的参数。</p>
 
 <p>参数主要包括了：</p>
 
 <blockquote>
-  <ul>
-    <li>pid 进程标识符</li>
-    <li>state 进程运行状态</li>
-    <li>thread 进程寄存器的信息 包括了 堆栈sp指针和当前进程指令ip</li>
-    <li>task_entry 进程运行代码的入口</li>
-    <li>下一个进程控制块（进程控制块是以链表的方式组织的）</li>
-  </ul>
+<ul>
+<li>pid 进程标识符</li>
+<li>state 进程运行状态</li>
+<li>thread 进程寄存器的信息 包括了 堆栈sp指针和当前进程指令ip</li>
+<li>task_entry 进程运行代码的入口</li>
+<li>下一个进程控制块（进程控制块是以链表的方式组织的）</li>
+</ul>
 </blockquote>
 
-<h4 id="mymainh">2. mymain.h</h4>
+<h4>2. mymain.h</h4>
 
 <p>先说下my_process()
 这个函数是进程调度时会运行的代码</p>
-
-<pre><code>	void my_process(void)
+<div class="highlight"><pre><code class="language-text" data-lang="text">    void my_process(void)
 {
     int i = 0;
     while(1)
@@ -259,28 +260,26 @@ void my_schedule(void);
         i++;
         if(i%10000000 == 0)
         {
-            printk(KERN_NOTICE "this is process %d -\n",my_current_task-&gt;pid);
+            printk(KERN_NOTICE &quot;this is process %d -\n&quot;,my_current_task-&gt;pid);
             if(my_need_sched == 1)
             {
                 my_need_sched = 0;
-        	    my_schedule();
-        	}
-        	printk(KERN_NOTICE "this is process %d +\n",my_current_task-&gt;pid);
+                my_schedule();
+            }
+            printk(KERN_NOTICE &quot;this is process %d +\n&quot;,my_current_task-&gt;pid);
         }     
     }
-</code></pre>
-
+</code></pre></div>
 <p>逻辑很简单，就是进程执行循环执行某个人物，当执行到i%10000000=0时，会进行调度。</p>
 
-<p>如果my_need_sched =1 会进行主动调度，执行调度函数 my_schedule()</p>
+<p>如果my<em>need</em>sched =1 会进行主动调度，执行调度函数 my_schedule()</p>
 
-<p>而这个 my_need_sched=1 是每次时钟中断发生时会改变一次，我们后面会看到</p>
+<p>而这个 my<em>need</em>sched=1 是每次时钟中断发生时会改变一次，我们后面会看到</p>
 
 <p>接着分析，my_main.c中主要的</p>
-
-<pre><code>void __init my_start_kernel(void)
+<div class="highlight"><pre><code class="language-text" data-lang="text">void __init my_start_kernel(void)
 {
-	int pid = 0;
+    int pid = 0;
     int i;
     /* Initialize process 0*/
     task[pid].pid = pid;
@@ -302,250 +301,235 @@ void my_schedule(void);
     /* start process 0 by task[0] */
     pid = 0;
     my_current_task = &amp;task[pid];
-	asm volatile(
-    	"movl %1,%%esp\n\t" 	/* set task[pid].thread.sp to esp */
-    	"pushl %1\n\t" 	        /* push ebp */
-    	"pushl %0\n\t" 	        /* push task[pid].thread.ip */
-    	"ret\n\t" 	            /* pop task[pid].thread.ip to eip */
-    	"popl %%ebp\n\t"
-    	: 
-    	: "c" (task[pid].thread.ip),"d" (task[pid].thread.sp)	/* input c or d mean %ecx/%edx*/
-	);
+    asm volatile(
+        &quot;movl %1,%%esp\n\t&quot;     /* set task[pid].thread.sp to esp */
+        &quot;pushl %1\n\t&quot;          /* push ebp */
+        &quot;pushl %0\n\t&quot;          /* push task[pid].thread.ip */
+        &quot;ret\n\t&quot;               /* pop task[pid].thread.ip to eip */
+        &quot;popl %%ebp\n\t&quot;
+        : 
+        : &quot;c&quot; (task[pid].thread.ip),&quot;d&quot; (task[pid].thread.sp)   /* input c or d mean %ecx/%edx*/
+    );
 }   
-</code></pre>
-
-<p>前半部分比较简单。是初始化进程控制块，把他们连接在一起（这是一个循环链表），然后将当前进程my_current_task=task[0];</p>
+</code></pre></div>
+<p>前半部分比较简单。是初始化进程控制块，把他们连接在一起（这是一个循环链表），然后将当前进程my<em>current</em>task=task[0];</p>
 
 <p>之后的操作就该是执行该控制块了。有这段汇编实现（<strong>重点</strong>）</p>
-
-<pre><code>asm volatile(
-	    	"movl %1,%%esp\n\t" 	/* set task[pid].thread.sp to esp */
-	    	"pushl %1\n\t" 	        /* push ebp */
-	    	"pushl %0\n\t" 	        /* push task[pid].thread.ip */
-	    	"ret\n\t" 	            /* pop task[pid].thread.ip to eip */
-	    	"popl %%ebp\n\t"
-	    	: 
-	    	: "c" (task[pid].thread.ip),"d" (task[pid].thread.sp)	/* input c or d mean %ecx/%edx*/
-		);
-</code></pre>
-
+<div class="highlight"><pre><code class="language-text" data-lang="text">asm volatile(
+            &quot;movl %1,%%esp\n\t&quot;     /* set task[pid].thread.sp to esp */
+            &quot;pushl %1\n\t&quot;          /* push ebp */
+            &quot;pushl %0\n\t&quot;          /* push task[pid].thread.ip */
+            &quot;ret\n\t&quot;               /* pop task[pid].thread.ip to eip */
+            &quot;popl %%ebp\n\t&quot;
+            : 
+            : &quot;c&quot; (task[pid].thread.ip),&quot;d&quot; (task[pid].thread.sp)   /* input c or d mean %ecx/%edx*/
+        );
+</code></pre></div>
 <p>这里应该是进行三步：</p>
 
 <ol>
-  <li>切换esp</li>
-  <li>保存上一个堆栈框架的ebp并且将ebp=esp（相当于entry <strong>这里没有ebp=esp 不够严谨</strong>）</li>
-  <li>跳转到task[0]的执行流里（实现方式是先push到esp中，然后ret，当esp指向的元素pop到eip中）</li>
+<li> 切换esp</li>
+<li> 保存上一个堆栈框架的ebp并且将ebp=esp（相当于entry <strong>这里没有ebp=esp 不够严谨</strong>）</li>
+<li>跳转到task[0]的执行流里（实现方式是先push到esp中，然后ret，当esp指向的元素pop到eip中）</li>
 </ol>
 
 <p>这样一个进程就开始执行了。</p>
 
-<h4 id="myinterruptc">3. myinterrupt.c</h4>
+<h4>3. myinterrupt.c</h4>
 
 <p>这里是时钟中断发生的处理函数：</p>
-
-<pre><code>	void my_timer_handler(void)
+<div class="highlight"><pre><code class="language-text" data-lang="text">    void my_timer_handler(void)
 {
 #if 1
     if(time_count%1000 == 0 &amp;&amp; my_need_sched != 1)
     {
-        printk(KERN_NOTICE "&gt;&gt;&gt;my_timer_handler here&lt;&lt;&lt;\n");
+        printk(KERN_NOTICE &quot;&gt;&gt;&gt;my_timer_handler here&lt;&lt;&lt;\n&quot;);
         my_need_sched = 1;
     } 
     time_count ++ ;  
 #endif
-    return;  	
+    return;     
 }
-</code></pre>
-
-<p>主要的就是会修改 my_need_sched 这个值触发调度</p>
+</code></pre></div>
+<p>主要的就是会修改 my<em>need</em>sched 这个值触发调度</p>
 
 <p>my_schedule(void) 调度函数</p>
-
-<pre><code>tPCB * next;
+<div class="highlight"><pre><code class="language-text" data-lang="text">tPCB * next;
 tPCB * prev;
 
 if(my_current_task == NULL 
     || my_current_task-&gt;next == NULL)
 {
-	return;
+    return;
 }
-printk(KERN_NOTICE "&gt;&gt;&gt;my_schedule&lt;&lt;&lt;\n");
+printk(KERN_NOTICE &quot;&gt;&gt;&gt;my_schedule&lt;&lt;&lt;\n&quot;);
 /* schedule */
 next = my_current_task-&gt;next;
 prev = my_current_task;
-</code></pre>
-
+</code></pre></div>
 <p>这一端代码的意思是</p>
 
 <p>next 为下一个进程</p>
 
 <p>prev 为当前进程</p>
-
-<pre><code>if(next-&gt;state == 0)/* -1 unrunnable, 0 runnable, &gt;0 stopped */
+<div class="highlight"><pre><code class="language-text" data-lang="text">if(next-&gt;state == 0)/* -1 unrunnable, 0 runnable, &gt;0 stopped */
     {
-    	/* switch to next process */
-    	asm volatile(	
-        	"pushl %%ebp\n\t" 	    /* save ebp */
-        	"movl %%esp,%0\n\t" 	/* save esp */
-        	"movl %2,%%esp\n\t"     /* restore  esp */
-        	"movl $1f,%1\n\t"       /* save eip */	
-        	"pushl %3\n\t" 
-        	"ret\n\t" 	            /* restore  eip */
-        	"1:\t"                  /* next process start here */
-        	"popl %%ebp\n\t"
-        	: "=m" (prev-&gt;thread.sp),"=m" (prev-&gt;thread.ip)
-        	: "m" (next-&gt;thread.sp),"m" (next-&gt;thread.ip)
-    	); 
-    	my_current_task = next; 
-    	printk(KERN_NOTICE "&gt;&gt;&gt;switch %d to %d&lt;&lt;&lt;\n",prev-&gt;pid,next-&gt;pid);   	
+        /* switch to next process */
+        asm volatile(   
+            &quot;pushl %%ebp\n\t&quot;       /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */  
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;               /* restore  eip */
+            &quot;1:\t&quot;                  /* next process start here */
+            &quot;popl %%ebp\n\t&quot;
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+        ); 
+        my_current_task = next; 
+        printk(KERN_NOTICE &quot;&gt;&gt;&gt;switch %d to %d&lt;&lt;&lt;\n&quot;,prev-&gt;pid,next-&gt;pid);      
     }
     else
     {
         next-&gt;state = 0;
         my_current_task = next;
-        printk(KERN_NOTICE "&gt;&gt;&gt;switch %d to %d&lt;&lt;&lt;\n",prev-&gt;pid,next-&gt;pid);
-    	/* switch to new process */
-    	asm volatile(	
-        	"pushl %%ebp\n\t" 	    /* save ebp */
-        	"movl %%esp,%0\n\t" 	/* save esp */
-        	"movl %2,%%esp\n\t"     /* restore  esp */
-        	"movl %2,%%ebp\n\t"     /* restore  ebp */
-        	"movl $1f,%1\n\t"       /* save eip */	
-        	"pushl %3\n\t" 
-        	"ret\n\t" 	            /* restore  eip */
-        	: "=m" (prev-&gt;thread.sp),"=m" (prev-&gt;thread.ip)
-        	: "m" (next-&gt;thread.sp),"m" (next-&gt;thread.ip)
-    	);          
+        printk(KERN_NOTICE &quot;&gt;&gt;&gt;switch %d to %d&lt;&lt;&lt;\n&quot;,prev-&gt;pid,next-&gt;pid);
+        /* switch to new process */
+        asm volatile(   
+            &quot;pushl %%ebp\n\t&quot;       /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl %2,%%ebp\n\t&quot;     /* restore  ebp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */  
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;               /* restore  eip */
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+        );          
     }   
-</code></pre>
-
+</code></pre></div>
 <p>next-&gt;state 代表运行状态  =0 代表已经运行  =-1 代表 还没有运行</p>
 
 <p>当next进程还没有运行时 进程切换的代码是这样的：</p>
-
-<pre><code>asm volatile(	
-        	"pushl %%ebp\n\t" 	    /* save ebp */
-        	"movl %%esp,%0\n\t" 	/* save esp */
-        	"movl %2,%%esp\n\t"     /* restore  esp */
-        	"movl %2,%%ebp\n\t"     /* restore  ebp */
-        	"movl $1f,%1\n\t"       /* save eip */	
-        	"pushl %3\n\t" 
-        	"ret\n\t" 	            /* restore  eip */
-        	: "=m" (prev-&gt;thread.sp),"=m" (prev-&gt;thread.ip)
-        	: "m" (next-&gt;thread.sp),"m" (next-&gt;thread.ip)
-</code></pre>
-
+<div class="highlight"><pre><code class="language-text" data-lang="text">asm volatile(   
+            &quot;pushl %%ebp\n\t&quot;       /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl %2,%%ebp\n\t&quot;     /* restore  ebp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */  
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;               /* restore  eip */
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+</code></pre></div>
 <p>步骤如下</p>
 
-<p>首先要保存现场：</p>
+<p>首先要保存现场： </p>
 
 <ol>
-  <li>保存ebp到当前进程的esp中 pushl %%ebp\n\t</li>
-  <li>保存当前esp的内容到 当前进程 movl %%esp,%0</li>
-  <li>保存eip movl $1f,%1 这里的$1f是下次运行时第一条指令的位置，代表为f （forward）向前方向上 1 标号 所指指令的地址。</li>
+<li>保存ebp到当前进程的esp中 pushl %%ebp\n\t</li>
+<li>保存当前esp的内容到 当前进程 movl %%esp,%0</li>
+<li> 保存eip movl $1f,%1 这里的$1f是下次运行时第一条指令的位置，代表为f （forward）向前方向上 1 标号 所指指令的地址。</li>
 </ol>
 
 <p>还有切换到当前进程的现场：</p>
 
 <ol>
-  <li>恢复esp。movl %2,%%esp</li>
-  <li>恢复ebp。movl %2,%%ebp  （<strong>刚开始运行 ebp=esp</strong>）</li>
+<li> 恢复esp。movl %2,%%esp</li>
+<li> 恢复ebp。movl %2,%%ebp  （<strong>刚开始运行 ebp=esp</strong>）</li>
 </ol>
 
 <p>最后跳转到next进程的执行流中:
 和之前一样</p>
-
-<pre><code>pushl %3
+<div class="highlight"><pre><code class="language-text" data-lang="text">pushl %3
 ret   
-</code></pre>
-
+</code></pre></div>
 <p>然后 ret的值就是my_process()这个函数的起始位置。开始执行该函数。</p>
 
 <p>然后 这样运行第一圈之后，又会回到task[0] 此时task[0]已经运行了。所以会执行一下汇编进行进程切换。</p>
-
-<pre><code>asm volatile(	
-        	"pushl %%ebp\n\t" 	    /* save ebp */
-        	"movl %%esp,%0\n\t" 	/* save esp */
-        	"movl %2,%%esp\n\t"     /* restore  esp */
-        	"movl $1f,%1\n\t"       /* save eip */	
-        	"pushl %3\n\t" 
-        	"ret\n\t" 	            /* restore  eip */
-        	"1:\t"                  /* next process start here */
-        	"popl %%ebp\n\t"
-        	: "=m" (prev-&gt;thread.sp),"=m" (prev-&gt;thread.ip)
-        	: "m" (next-&gt;thread.sp),"m" (next-&gt;thread.ip)
-    	); 
-</code></pre>
-
+<div class="highlight"><pre><code class="language-text" data-lang="text">asm volatile(   
+            &quot;pushl %%ebp\n\t&quot;       /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */  
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;               /* restore  eip */
+            &quot;1:\t&quot;                  /* next process start here */
+            &quot;popl %%ebp\n\t&quot;
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+        ); 
+</code></pre></div>
 <p>保存现场和恢复现场的部分是和之前一样的。
 除了恢复现场没有恢复ebp</p>
 
 <p>关键是还记得上一次我们保存 当前进程的eip的时候，保存的值是$1f嘛？
-所以</p>
-
-<pre><code>pushl %3
-ret      要进入下一个进程的执行流时，此时的eip 为 1 标号所对应的指令
-
-1：popl %%ebp
-</code></pre>
-
+所以 </p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">pushl %3
+ret     
+</code></pre></div>
+<p>要进入下一个进程的执行流时，此时的eip 为 1 标号所对应的指令</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">1：popl %%ebp
+</code></pre></div>
 <p>这样过程就完整了，恢复现场的工作完成了，ebp指向了正确的值。</p>
 
-<h3 id="section-2">三、总结</h3>
+<h3>三、总结</h3>
 
 <p>其实，整个过程最重要的就是理解函数调用栈的框架。</p>
 
 <p>这个框架大概是这样的</p>
 
-<p><img src="/linux2/end.png" alt="enter image description here" /></p>
+<p><img src="/linux2/end.png" alt="enter image description here"></p>
 
 <p>保持这个框架的完整性即可</p>
 
-<h3 id="section-3">四、补充</h3>
+<h3>四、补充</h3>
 
 <ul>
-  <li>volatile 限定符 会把变量放在register中  执行流取的时候 要放到寄存器 放到内存容易出现问题</li>
-  <li>如何 制作整个 mykernel 项目的</li>
+<li>volatile 限定符 会把变量放在register中  执行流取的时候 要放到寄存器 放到内存容易出现问题</li>
+<li>如何 制作整个 mykernel 项目的</li>
 </ul>
 
 <p>mykernel 的制作涉及到了两个问题：</p>
 
 <ol>
-  <li>如何设置时钟中断</li>
-  <li>如何把控制权交给 mymain.c 中的  my_start_kernel</li>
+<li> 如何设置时钟中断</li>
+<li>如何把控制权交给 mymain.c 中的  my<em>start</em>kernel</li>
 </ol>
 
-<p>其实两个问题都可以从  <a href="https://github.com/mengning/mykernel/blob/master/mykernel_for_linux3.9.4sc.patch">mykernel_for_linux3.9.4sc.patch</a>
+<p>其实两个问题都可以从  <a href="https://github.com/mengning/mykernel/blob/master/mykernel_for_linux3.9.4sc.patch">mykernel<em>for</em>linux3.9.4sc.patch</a>
 中找到答案</p>
 
 <p>因为文件比较大 我就不贴出来了。。</p>
 
 <p>直接标记大概修改了那些地方：</p>
 
-<h5 id="section-4">1.和时钟中断有关</h5>
+<h5>1.和时钟中断有关</h5>
 
 <blockquote>
-  <ul>
-    <li>/arch/x86/kernel/time.c 中的 timer_interrupt（） (时钟中断处理函数 会调用my_timer_handler();)</li>
-  </ul>
+<ul>
+<li>/arch/x86/kernel/time.c 中的 timer<em>interrupt（） (时钟中断处理函数 会调用my</em>timer_handler();)</li>
+</ul>
 </blockquote>
 
-<h5 id="mymainc">2.和mymain.c相关</h5>
+<h5>2.和mymain.c相关</h5>
+
 <blockquote>
-  <ul>
-    <li>/init/main.c 中的 start_kernel()</li>
-  </ul>
+<ul>
+<li>/init/main.c 中的 start_kernel()</li>
+</ul>
 </blockquote>
 
-<h5 id="section-5">3.其他细节</h5>
+<h5>3.其他细节</h5>
 
 <blockquote>
-  <ul>
-    <li>extern 需要的函数 如：在/arch/x86/kernel/time.c  extern void my_timer_handler(void);</li>
-    <li>编写需要的makefile 主要是 /mykernel/Makefile</li>
-    <li>同时还需要修改下根目录下的 总Makefile</li>
-    <li>还有README  (^_^)Y</li>
-  </ul>
+<ul>
+<li>extern 需要的函数 如：在/arch/x86/kernel/time.c  extern void my<em>timer</em>handler(void);</li>
+<li>编写需要的makefile 主要是 /mykernel/Makefile </li>
+<li>同时还需要修改下根目录下的 总Makefile</li>
+<li>还有README  (^_^)Y</li>
+</ul>
 </blockquote>
 
   </div>
@@ -555,6 +539,24 @@ ret      要进入下一个进程的执行流时，此时的eip 为 1 标号所�
 
 
       </div>
+
+    <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="" data-title="Sip 桑 的 Blog~ ^。^" data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"easyforgood"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+     || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+  </script>
+<!-- 多说公共JS代码 end -->
+
 
     </div>
 
@@ -577,6 +579,7 @@ ret      要进入下一个进程的执行流时，此时的eip 为 1 标号所�
     <script src="/assets/themes/bootstrap-3/js/prettify.js"></script>
     <script src="/assets/themes/bootstrap-3/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
+
   </body>
 </html>
 

@@ -1,0 +1,365 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Linux内核分析作业7：Linux内核如何装载和启动一个可执行程序</title>
+    
+    <meta name="author" content="siplexy">
+
+    <!-- Enable responsive viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap styles -->
+    <link href="/assets/themes/bootstrap-3/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+   <!--  <link href="/assets/themes/bootstrap-3/css/prettify.css" rel="stylesheet"> -->
+   <link rel="stylesheet" href="/assets/themes/bootstrap-3/css/zenburn.css">
+    <!-- Optional theme -->
+    <link href="/assets/themes/bootstrap-3/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet">
+    <!-- Sticky Footer -->
+    <link href="/assets/themes/bootstrap-3/bootstrap/css/bs-sticky-footer.css" rel="stylesheet">
+    
+    <!-- Custom styles -->
+    <link href="/assets/themes/bootstrap-3/css/style.css?body=1" rel="stylesheet" type="text/css" media="all">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <!-- Update these with your own images
+      <link rel="shortcut icon" href="images/favicon.ico">
+      <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+      <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+    -->
+
+    <!-- atom & rss feed -->
+    <link href="/atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed">
+    <link href="/rss.xml" type="application/rss+xml" rel="alternate" title="Sitewide RSS Feed">
+
+  </head>
+
+  <body>
+    <div id="wrap">
+      <nav class="navbar navbar-default" role="navigation">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#jb-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">Sip 桑 的 Blog~ ^。^</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="jb-navbar-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+            
+
+
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/archive.html">Archive</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/categories.html">Categories</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/pages.html">Pages</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/tags.html">Tags</a></li>
+      	
+      
+    
+  
+
+
+
+          </ul>
+          <form class="navbar-form navbar-right" role="search">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Search">
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+          </form>
+        </div><!-- /.navbar-collapse -->
+      </nav>
+
+      <div class="container">
+        
+<div class="page-header">
+  <h1>Linux内核分析作业7：Linux内核如何装载和启动一个可执行程序 </h1>
+</div>
+
+<div class="row">
+  <div class="col-xs-12">
+    <h4>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</h4>
+
+<hr>
+
+<h3>一、知识点总结</h3>
+
+<ul>
+<li><strong>预处理、编译和链接</strong>：</li>
+</ul>
+
+<p>gcc -E -o hello.cpp hello.c -m32  //预处理</p>
+
+<p>gcc -x cpp-output -S -o hello.s hello.cpp -m32  //编译</p>
+
+<p>gcc -x assembler -c hello.s -o hello.o -m32  //汇编</p>
+
+<p>gcc -o hello hello.o -m32  //链接</p>
+
+<p>gcc -o hello.static hello.o -m32 -static  //静态链接</p>
+
+<ul>
+<li><strong>ELF文件格式</strong> ：</li>
+</ul>
+
+<p>分成三种：</p>
+
+<ol>
+<li><p>可重定位的对象文件(Relocatable file)</p></li>
+<li><p>可执行的对象文件(Executable file)</p></li>
+<li><p>可被共享的对象文件(Shared object file)</p></li>
+</ol>
+
+<p>elf文件主要包括了：</p>
+
+<p>ELF header :  elf头部，基本信息</p>
+
+<p>Program header table  执行文件信息;只出现在执行文件中.</p>
+
+<p>Section data ：  Section的实际数据;一些section有特殊的含义</p>
+
+<p>Section headers ： 每个section的header</p>
+
+<blockquote>
+<p>装载ELF的目的一般是确定各个区域的边界：text区的起始和终止位置，data区的起始<br>
+和终止位置，bss区的起始和终止位置，heap和stack的起始位置（它们的终止位置是 
+动态变化的）。还有就是把text区和data区的内容做mmap映射：ELF文件的内容不会
+被 真地拷贝到内存，只有当真正需要的时候，内核才会通过page fault的形式把文件
+存复制到内存中去。</p>
+</blockquote>
+
+<ul>
+<li><strong>可执行程序的执行环境</strong>: </li>
+</ul>
+
+<blockquote>
+<p>与 Unix类似，Linux 中的程序和命令通常由命令解释器执行，这一命令解释器称为 shell。用户输入命令之后，shell 会在搜索路径（shell 变量PATH中包含搜索路径）指定的目录中搜索和输入命令匹配的映象（可执行的二进制代码）名称。如果发现匹配的映象，shell 负责装载并执行该映像。shell 首先利用 fork 系统调用建立子进程，然后用找到的可执行映象文件覆盖子进程正在执行的 shell 二进制映象。</p>
+
+<p>当用户敲入一个命令时，从shell可以接受一些命令行参数</p>
+
+<p>int main(int argc, char *argv[], char *envp[]) argc 为参数个数，argv为传递的字符串，envp为环境变量</p>
+</blockquote>
+
+<h3>二、执行过程跟踪</h3>
+
+<p>整体流程简介：</p>
+
+<p><img src="./linux7/flow.png" alt="enter image description here"></p>
+
+<p>系统调用execvlp()系统调用首先会进入Sys_execve()</p>
+
+<p>然后由Sys<em>execve()-&gt;do</em>execve()-&gt;do<em>common</em>execve()</p>
+
+<p><img src="./linux7/lab2.png" alt="enter image description here"></p>
+
+<p><img src="./linux7/lab3.png" alt="enter image description here"></p>
+
+<blockquote>
+<p>do<em>common</em>execve() 从目标文件的头部(从第一个字节开始)读入若干(128)字节，然后调用另一个函数search<em>binary</em>handler()，在那里面让各种可执行程序的处理程序前来认领和处理。内核所支持的每种可执行程序都有个struct linux<em>binfmt数据结构，通过向内核登记挂入一个队列。而search</em>binary_handler()，则扫描这个队列，让各个数据结构所提供的处理程序、即各种映像格式、逐一前来认领。如果某个格式的处理程序发现特征相符而，便执行该格式映像的装入和启动。</p>
+</blockquote>
+
+<p>exec<em>binprm() -&gt; search</em>binary_handler ()</p>
+
+<p><img src="./linux7/lab4.png" alt="enter image description here"></p>
+
+<p><img src="./linux7/lab5.png" alt="enter image description here"></p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">#define load_elf_binary load_elf32_binary
+static struct linux_binfmt elf_format = {
+.module = THIS_MODULE,
+.load_binary = load_elf_binary,
+.load_shlib = load_elf_library,
+.core_dump = elf_core_dump,
+.min_coredump = ELF_EXEC_PAGESIZE
+};
+</code></pre></div>
+<p>在 search<em>binary</em>handler()中执行 fmt-&gt;load<em>binary(bprm) 便进入 load</em>elf_binary</p>
+
+<p>（这里采用了观察者模式，虽然是一个很好的设计，但是对于阅读代码而言，带来了很多阻碍，因为你不知道到底调用的是哪个具体的处理函数）</p>
+
+<p>在load<em>elf</em>binary 中主要是找到elf_entry和bprm-&gt;p</p>
+
+<blockquote>
+<p>如果应用程序中使用了动态链接库，就没有那么简单了，内核除了加载指定的可执
+行文件，还要把控制权交给动态连接器(program interpreter，ld.so in linux)以处理动态
+链接的程序。内核搜寻段表，找到标记为PT<em>INTERP的段中所对应的动态连接器的
+名称，并使用load</em>elf<em>interp()加载其映像，并把返回的入口地址设置成load</em>elf_interp
+()的返回值，即动态链接器入口。当execve退出的时候动态链接器接着运行。动态连
+接器检查应用程序对共享连接库的依赖性，并在需要时对其进行加载,对程序的外部
+引用进行重定位。然后动态连接器把控制权交给应用程序，从ELF文件头部中定义
+的程序进入点开始执行。</p>
+</blockquote>
+
+<p>一个是new<em>ip 一个是new</em>sp</p>
+
+<p>最后调用 start_thread()</p>
+
+<p><img src="./linux7/lab8.png" alt="enter image description here"></p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">void start_thread(struct pt_regs *regs, unsigned long eip, unsigned long esp)
+{
+PT_REGS_IP(regs) = eip;
+PT_REGS_SP(regs) = esp;
+current-&gt;ptrace &amp;= ~PT_DTRACE;
+}
+</code></pre></div>
+<p>给pt_regs结构体赋值。</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">struct pt_regs *regs = current_pt_regs();
+</code></pre></div>
+<p>在前面可以发现，这个pt<em>regs 就是指向当前进程的进程状态段（thread</em>info）的pt_regs</p>
+
+<p>最后进行系统调用即可</p>
+
+<p><img src="./linux7/lab9.png" alt="enter image description here"></p>
+
+<p>（不知道 为什么退出sys<em>execve()会进入core.c中的schedule函数，不应该是在syscall</em>exit中进行调用的吗？）</p>
+
+<h3>三、 总结</h3>
+
+<p>之前的fork只是创建了父进程的拷贝，但是还是运行父进程的代码，但那时execve（）却替换了子进程的函数调用栈和修改了eip的指向。</p>
+
+<p>为什么庄生梦蝶？</p>
+
+<p>我有一种感觉就是如果一个进程不断execve()自己本身，就像自己不断在做梦，然后梦见自己不断在做梦，这样不断循环的感觉。但实际上，每一个都不是原来的自己了。。
+（越说越乱了。。。）</p>
+
+<hr>
+
+  </div>
+</div>
+
+
+
+
+      </div>
+
+    <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="" data-title="Sip 桑 的 Blog~ ^。^" data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"easyforgood"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+     || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+  </script>
+<!-- 多说公共JS代码 end -->
+
+
+    </div>
+
+    <div id="footer">
+      <div class="container">
+        <p>&copy; 2015 siplexy
+          with help from <a href="http://jekyllbootstrap.com" target="_blank" title="The Definitive Jekyll Blogging Framework">Jekyll Bootstrap</a>
+          and <a href="http://twitter.github.com/bootstrap/" target="_blank">Twitter Bootstrap</a>
+        </p>
+      </div>
+    </div>
+
+    
+
+
+    <!-- Latest compiled and minified JavaScript, requires jQuery 1.x (2.x not supported in IE8) -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="/assets/themes/bootstrap-3/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/assets/themes/bootstrap-3/js/prettify.js"></script>
+    <script src="/assets/themes/bootstrap-3/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+  </body>
+</html>
+
+
+
