@@ -31,16 +31,20 @@ tagline:
 
 宏观的分析了操作系统的启动流程，从**start_kernel()** 主要是**rest_init()** 完成了第一个用户进程的创建
 
+
 4、5、[系统调用的使用和过程详解](http://www.siplexy.me/Linux_45.html)
 
 主要内容是 **用户态和内核态的接口---系统调用的概念以及原理**
 
 涉及到了 **中断上下文切换** 以及**系统调用的三层皮**
+
+
 6、[分析Linux内核创建一个新进程的过程](http://www.siplexy.me/Linux_6.html)
 
 主要内容是 **进程简析**
 
 涉及到了 进程控制块（**task_struct**）的结构以及是如何通过**do_fork()**创建一个进程的
+
 
 7、 [Linux内核如何装载和启动一个可执行程序](http://www.siplexy.me/Linux_7.html)
 
