@@ -1,150 +1,157 @@
-###Linux�ں˶���ʼ�1_�ڴ�Ѱַ
+---
+layout: page
+title: Linux内核读书笔记1
+tagline: 内存寻址
+---
+{% include JB/setup %}
 
----*��д�������֮ǰ����Ҫ������²�һ�£���֮ǰд����һƪ�ܳ�������û�б����������ҵ��Ķ�Ҫ���ˡ������ǻ���ssdû������ʧ��*
 
-�ص����⣺
 
-###һ���������
+---*在写这边文章之前必须要深深地吐槽一下：我之前写过了一篇很长的文章没有保存下来。我的心都要碎了。。但是还好ssd没有让我失望*
+
+回到正题：
+
+###一、整体概念
 
 ![enter image description here](http://blog.chinaunix.net/attachment/201208/3/24708340_1343984974Ejr8.png)
 
-�ڴ�Ѱַ���Ҫ�����⼸��ת��
+内存寻址大概要经过这几种转换
 
-�߼���ַ�� �ɶκ�ƫ�������ɡ� ���򿪷���Ա��
+逻辑地址： 由段和偏移量构成。 面向开发人员的
 
-���Ե�ַ�� һ��32bit�޷���λ�� ȡֵ��Χ��0x00000000 ~ 0xffffffff
+线性地址： 一个32bit无符号位数 取值范围从0x00000000 ~ 0xffffffff
 
-������ַ:		������Ӧ�ڴ�ĵ�ַ���е�ַ���߶�Ӧ�ġ�32bit����**36bit**��intel �� Pentium Pro �� ���������ţ�����Ҫϵͳ֧��PAE��
+物理地址:		真正对应内存的地址，有地址总线对应的。32bit或者**36bit**（intel 在 Pentium Pro 后 增加了引脚，但是要系统支持PAE）
 
-��Ҫ�ڴ������Ԫ��**MMU**��Ӳ��֧�ֲ��ܽ��е�ַת��
+需要内存管理单元（**MMU**）硬件支持才能进行地址转换
 
-��Ҫ**�ֶε�Ԫ** ��**��ҳ��Ԫ**
+需要**分段单元** 和**分页单元**
 
-����mmu��Ӧ�ð��� �ڴ��ٲ��� ����Э���ദ�����ô��DMA
+另外mmu还应该包含 内存仲裁器 用来协调多处理器访存和DMA
 
-###�������ڷֶ�
+###二、关于分段
 
-��*�ֶ� �� ��ҳ ����Ҫcpu���뱣��ģʽ ʵģʽ�������������Ծ�*��
+（*分段 和 分页 都需要cpu进入保护模式 实模式用来操作初期自举*）
 
-- ####��ѡ���
+- ####段选择符
 	
-	��ѡ�������**�μĴ���**�� ��cs ����μĴ���  ds���ݶμĴ���  ssջ�μĴ���
+	段选择符放在**段寄存器**中 ，cs 代码段寄存器  ds数据段寄存器  ss栈段寄存器
 
-> Cs�Ĵ�������һ����Ҫ���ܣ�������һ����λ�ֶΣ�����ָ��CPU�ĵ�ǰ��Ȩ����Current Privilege level��CPL����0��ʾ��ߣ�3����������ȼ���Linuxֻ��0����3�����ֱ��Ϊ�ں�̬���û�̬��
+> Cs寄存器还有一个重要功能，它包含一个两位字段，用以指明CPU的当前特权级（Current Privilege level，CPL），0表示最高，3代表最低优先级。Linux只用0级和3级，分别称为内核态和用户态。
 
-��Ȩ��Խ�� ��ȨԽ��
+特权级越大 特权越低
 
-������EPL = Max(CPL ,RPL) <= DPL ������ ���Է��ʣ�
+（关于EPL = Max(CPL ,RPL) <= DPL 成立则 可以访问）
 
-��ѡ�����16bit  ������
+段选择符有16bit  包含：
 
-- ������
-- ��ָʾ�� gdt or ldt
-- RPL ��������Ȩ��
+- 索引号
+- 表指示器 gdt or ldt
+- RPL 请求者特权级
 
-- ####��������
+- ####段描述符
 
-8byte ���������ε�����
+8byte 用来描述段的特征
 
-����� GDT �� LDT�� �� ���ڴ�ĵ�ַ�ֱ���� gdtr �� ldtr ���ƼĴ����� 
+存放在 GDT 和 LDT中 ， 在内存的地址分别放在 gdtr 和 ldtr 控制寄存器中 
 
-��Ҫ������Base **�����ֽڵĵ�ַ** ��һ�����ֽڵĵ�ַָ�������Ϊ0 ������� ��ƫ�����쳣��
+主要包含了Base **段首字节的地址** （一般首字节的地址指向的内容为0 用来标记 段偏移量异常）
 
-**Limit ���������εĳ���**
+**Limit 用来决定段的长度**
 
-**DPL ��������Ȩ��**
+**DPL 描述符特权级**
 
-**���ٷ��ʶ�������**
-Ϊ�˼����߼���ַ�����Ե�ַ��ת����80x86�ṩ��**һ�����ӵĲ��ɱ�̵ļĴ�������6���μĴ���ʹ�ã�����8���ֽڵĶ���������**ÿ��һ����ѡ�����װ��μĴ���ʱ����Ӧ�Ķ������������ڴ�װ���Ӧ�ķǱ�̵�CPU�Ĵ������������߼���ַ�����Ե�ַת���Ͳ��÷��������е�GDT��LDT�����ǶμĴ��������иı�ʱ��
+**快速访问段描述符**
+为了加速逻辑地址到线性地址的转换，80x86提供了**一个附加的不可编程的寄存器，供6个段寄存器使用，包含8个字节的段描述符。**每当一个段选择符被装入段寄存器时，相应的段描述符就由内存装入对应的非编程的CPU寄存器。这样，逻辑地址到线性地址转换就不用访问主存中的GDT或LDT。除非段寄存器内容有改变时。
 
-**�ֶε�Ԫ**ִ�����²�����
+**分段单元**执行以下操作：
 
-1. �ȼ���ѡ�����TI�ֶΣ��Ծ�����ѡ�����GDT����LDT�С�
-2. ��index�ֶμ�����������ĵ�ַ��indexֵ*8+gdtr/ldtr
-3. �߼���ַƫ���������������Base�ֶ���Ӽ����õ����Ե�ַ��
+1. 先检查段选择符的TI字段，以决定段选择符在GDT还是LDT中。
+2. 从index字段计算段描述符的地址，index值*8+gdtr/ldtr
+3. 逻辑地址偏移量与段描述符的Base字段相加减，得到线性地址。
 
 ![enter image description here](http://blog.chinaunix.net/attachment/201208/3/24708340_1343985016OjVi.png)
 
 
-linux��ϲ���ֶΡ���
+linux不喜欢分段。！
 
-**������ƽ̹ģʽѰַ**
+**这里是平坦模式寻址**
 
-һ��Ķ�ģʽ��ͬ���򶼻��ǲ�ͬ�ĶΣ���������ı���ģʽ�µ�ƽ̹ģʽ�������ڴ�ӳ�����һ���޴�����顣
-
-
-
-�������û�̬������Linux���̶�ʹ��һ����ͬ�Ķ���Ѱַ�����û�����Σ��û����ݶΡ�
+一般的段模式不同程序都会是不同的段，但是这里的保护模式下的平坦模式把整个内存映射成了一个巨大的数组。
 
 
-###  ���� ���ڷ�ҳ
 
-�����Ե�ַӳ�䵽������ַ�����ݽṹ��**ҳ��**(page table),ҳ���������У���������ҳ��Ԫ֮ǰ�������ں˶�ҳ�������ʵ��ĳ�ʼ����
+运行在用户态的所有Linux进程都使用一对相同的段来寻址，即用户代码段，用户数据段。
 
-cr0�Ĵ��� PG��־λ =1 ��ʾ����ҳ��
 
-��80386��intel�ķ�ҳ��Ԫ����4KB��ҳ��32λ�����Ե�ַ���ֳ�3����
+###  三、 关于分页
+
+把线性地址映射到物理地址的数据结构叫**页表**(page table),页表在主存中，在启动分页单元之前必须由内核对页表进行适当的初始化。
+
+cr0寄存器 PG标志位 =1 表示启动页表
+
+从80386起，intel的分页单元处理4KB的页，32位的线性地址被分成3个域：
  
-- Directory��ҳĿ¼�������10λ
+- Directory（页目录），最高10位
 
-- Table��ҳ�������м�10λ
+- Table（页表），中间10位
 
-- Offset��ƫ�����������12λ 
+- Offset（偏移量），最低12位 
 
-���Ե�ַ��ת����������ÿһ��������һ��ת��������һ����ҳĿ¼��(page directory)���ڶ�����ҳ��(page table).
+线性地址的转换分两步，每一步都基于一种转换表，第一种是页目录表(page directory)，第二种是页表(page table).
 
-ҳĿ¼��������ַ����cr3
+页目录的物理地址放在cr3
 
-ҳ�����ҳĿ¼����Ҫ�ṹ��
-> Present ��־ ��ʾ �Ƿ����ڴ���
+页表项和页目录项主要结构：
+> Present 标志 表示 是否在内存中
 >
-> 20bit ҳ��������ַ
+> 20bit 页框物理地址
 
->dirty ��־��д��������ϵͳ���� 
+>dirty 标志：写操作操作系统设置 
 
-> accessed��־����ҳ��ѰַOS���� 
+> accessed标志：对页框寻址OS设置 
 
-> read/write��־����ȡȨ��
+> read/write标志：存取权限
 
-��������
+。。。。
 
 ![enter image description here](http://blog.chinaunix.net/attachment/201208/3/24708340_1343985052ShV3.png)
 
 
-**��չ��ҳ**
+**扩展分页**
 
-����ҳ���СΪ4MB��������4KB
+允许页框大小为4MB，而不是4KB
 
-**������ַ��չ��PAE)**
+**物理地址扩展（PAE)**
 
-Ϊ�� ӳ�����4GB���ڴ��ַ�ռ䡣
+为了 映射大于4GB的内存地址空间。
 
-**64λϵͳ�еķ�ҳ***
+**64位系统中的分页***
 
 ![enter image description here](http://blog.chinaunix.net/attachment/201208/3/24708340_134398508372jC.png)
 
 
-**Ӳ�����ٻ���Cache**
+**硬件高速缓存Cache**
 
-��СCPU��RAM֮����ٶȲ�ƥ�䣬������Ӳ�����ٻ����ڴ�(hardware cache memory) ���ڷ�ҳ��Ԫ֮����ڴ�֮ǰ��cache��ŵ��Ƕ�д���ݣ���ַ��**������ַƥ��������Ե�ַ**
+缩小CPU和RAM之间的速度不匹配，引入了硬件高速缓存内存(hardware cache memory) 是在分页单元之后和内存之前，cache存放的是读写数据，地址是**物理地址匹配而非线性地址**
 
-**ת����Ԯ������(TLB)**
+**转换后援缓冲器(TLB)**
 
-80x86����������������һ��TLB(Translation Lookaside Buffer)�ĸ��ٻ������ڼӿ����Ե�ַ��ת����
+80x86处理器还包含了另一个TLB(Translation Lookaside Buffer)的高速缓存用于加快线性地址的转换。
 
-�ؼ���ʲôʱ��TLBʧЧ
+关键是什么时候TLB失效
 
-####Linux�еķ�ҳ
+####Linux中的分页
 
-- ҳȫ��Ŀ¼(Page Global Directory)
+- 页全局目录(Page Global Directory)
 
-- ҳ�ϼ�Ŀ¼(Page Upper Directory)
+- 页上级目录(Page Upper Directory)
 
-- ҳ�м�Ŀ¼(Page Middle Directory)
+- 页中间目录(Page Middle Directory)
 
-- ҳ��(Page Table)
+- 页表(Page Table)
 
-> ����û������������ַ��չ��32λϵͳ������ҳ���Ѿ��㹻�ˣ�Linuxͨ��ʹ**��ҳ�ϼ�Ŀ¼��λ�͡�ҳ�м�Ŀ¼��λȫΪ0**���Ӹ�����ȡ����ҳ�ϼ�Ŀ¼��ҳ�м�Ŀ¼�ֶΡ�����������Ŀ¼��ָ�������е�λ�ñ��������Ա�ͬ���Ĵ�����32λ��64λϵͳ����ʹ�á�
+> 对于没有启用物理地址扩展的32位系统，两级页表已经足够了，Linux通过使**“页上级目录”位和“页中间目录”位全为0**，从根本上取消了页上级目录和页中间目录字段。不过这两个目录在指针序列中的位置被保留，以便同样的代码在32位和64位系统都能使用。
 
 
 
@@ -152,12 +159,12 @@ cr0�Ĵ��� PG��־λ =1 ��ʾ����ҳ��
 
 ----
 
-##����
+##问题
 
 
-1. TSSD �Ǹ����?
+1. TSSD 是干吗的?
 
-���ڱ��洦�����Ĵ��������ݡ�
+用于保存处理器寄存器的内容。
 
-2.  ����TLB
+2.  懒惰TLB
 
