@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>Linux内核分析作业1：</title>
+    <title>Linux内核分析————总结</title>
     
     <meta name="author" content="siplexy">
 
@@ -67,6 +67,22 @@
             
 
 
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+    
+      
+    
   
     
       
@@ -160,305 +176,80 @@
       <div class="container">
         
 <div class="page-header">
-  <h1>Linux内核分析作业1：  <small>X86体系下计算机是如何运行程序</small></h1>
+  <h1>Linux内核分析————总结 </h1>
 </div>
 
 <div class="row">
   <div class="col-xs-12">
     <h4>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</h4>
 
-<h3>一、 现代计算机模型---冯诺依曼体系结构</h3>
-
-<p>冯诺依曼体系结构就是指存储程序计算机</p>
-
-<p>经典的存储程序计算机由以下五部分组成：</p>
-
-<p><img src="http://baike.soso.com/p/20090709/20090709080850-1101162591.jpg" alt="jiego"></p>
-
-<p>(其中 实线代表 数据线 虚线代表 控制线)</p>
-
-<ol>
-<li>采用存储程序方式，指令和数据不加区别混合存储在同一个存储器中，（数据和程序在内存中是没有区别的,它们都是内存中的数据,当EIP指针指向哪 CPU就加载那段内存中的数据,如果是不正确的指令格式,CPU就会发生错误中断. 在现在CPU的保护模式中,每个内存段都其描述符,这个描述符记录着这个内存段的访问权限(可读,可写,可执行).这最就变相的指定了哪个些内存中存储的是指令哪些是数据）
-指令和数据都可以送到运算器进行运算，即由指令组成的程序是可以修改的。</li>
-<li>存储器是按地址访问的线性编址的一维结构，每个单元的位数是固定的。</li>
-<li>指令由操作码和地址组成。操作码指明本指令的操作类型,地址码指明操作数和地址。操作数本身无数据类型的标志，它的数据类型由操作码确定。</li>
-<li>通过执行指令直接发出控制信号控制计算机的操作。指令在存储器中按其执行顺序存放，由指令计数器指明要执行的指令所在的单元地址。指令计数器只有一个，一般按顺序递增，但执行顺序可按运算结果或当时的外界条件而改变。</li>
-<li>以运算器为中心，I/O设备与存储器间的数据传送都要经过运算器。</li>
-<li>数据以二进制表示。</li>
-</ol>
-
-<p>（上的现代微处理器体系结构这么课还提到了<a href="http://www.cnblogs.com/li-hao/archive/2011/12/21/2296010.html">哈佛结构</a> 和冯诺依曼结构区别主要在于数据和指令分开存储）</p>
-
-<h3>二、 X86计算机结构</h3>
-
-<p><a href="http://www.cnblogs.com/zhaoyl/archive/2012/05/15/2501972.html">80X86寄存器详解</a></p>
-
-<p><img src="/images/r2.png" alt="结构"></p>
-
-<h3>三、实验代码汇编分析</h3>
-
-<p>C语言代码如下：</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">int g(int x){
-    return x-3;
-}
-int f(int x){
-    return g(x);
-}
-int main(){
-    return f(1)+2;
-}
-</code></pre></div>
-<p>通过gcc进行编译后生成*.s汇编代码</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">$ gcc -S -o main.s main.c -m32
-</code></pre></div>
-<p>(注：-m32 代表以32bit为链接库编译 64bit操作系统需要安装<a href="http://andycoder.me/fix-32bug-under-ubuntu1404/">libc6:i386</a> 32位库)</p>
-
-<p>得到汇编代码main.s:
-(这里删除了.long .global .section <a href="http://blog.csdn.net/jnu_simba/article/details/11747901">节或汇编程序辅助信息</a>)</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">g:
-    pushl    %ebp
-    movl    %esp, %ebp
-    movl    8(%ebp), %eax
-    subl    $3, %eax
-    popl    %ebp
-    ret
-f:
-    pushl   %ebp
-    movl    %esp, %ebp
-    subl    $4, %esp
-    movl    8(%ebp), %eax
-    movl    %eax, (%esp)
-    call    g
-    leave
-    ret
-main:
-    pushl   %ebp
-    movl    %esp, %ebp
-    subl    $4, %esp
-    movl    $1, (%esp)
-    call    f
-    addl    $2, %eax
-    leave
-    ret
-</code></pre></div>
 <hr>
 
-<p>以下是分析：</p>
+<h3>一、Linux 内核分析文章列表</h3>
 
-<p>main：</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    pushl   %ebp
-    movl    %esp, %ebp
-</code></pre></div>
-<p>这两条指令可以放在一起看 相当于enter</p>
+<p>1、<a href="http://www.siplexy.me/Linux_1.html"> X86体系下计算机是如何运行程序</a></p>
 
-<p>进入函数体都会最先执行这条enter指令</p>
+<p>主要内容是<strong>计算机是如何工作的</strong></p>
 
-<p>作用是切换到保存上一个栈的栈底，并且将当前栈顶位置设置为栈底</p>
+<p>涉及到了<strong>冯诺依曼存储计算机</strong>的体系结构 、一些汇编指令的堆栈变化。</p>
 
-<p>栈结构：</p>
+<p>2、 <a href="http://www.siplexy.me/Linux_2.html">一个简单的时间片轮转多道程序内核代码</a></p>
 
-<p><img src="/images/1.png" alt="结构"></p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    subl    $4, %esp
-    movl    $1, (%esp)
-</code></pre></div>
-<p>这两条指令也可以放在一起看</p>
+<p>主要内容是<strong>操作系统的运行原理</strong></p>
 
-<p>在main函数中我们是f(1)+2 吗？这里有个 立即数1 
-我们要如何使用这个参数呢？肯定需要把他放在内存中放在堆栈中</p>
+<p>涉及到了 <strong>函数调用栈</strong>的结构以及操作系统是如何利用这个结构进行<strong>进程上下文</strong>切换的</p>
 
-<p>所以这里 先是下移一个位置，指向一个空的区域，然后把 ‘1’ 放入这个空间中</p>
+<p>3、 <a href="http://www.siplexy.me/Linux_3.html">跟踪分析Linux内核的启动过程</a></p>
 
-<p>相当于 push $1</p>
+<p>主要内容是<strong>操作系统启动过程</strong></p>
 
-<p>栈结构：
-subl    $4, %esp</p>
+<p>宏观的分析了操作系统的启动流程，从<strong>start_kernel()</strong> 主要是<strong>rest_init()</strong> 完成了第一个用户进程的创建</p>
 
-<p><img src="/images/2.png" alt="结构"></p>
+<p>4、5、<a href="http://www.siplexy.me/Linux_45.html">系统调用的使用和过程详解</a></p>
 
-<p>movl    $1, (%esp)：</p>
+<p>主要内容是 <strong>用户态和内核态的接口---系统调用的概念以及原理</strong></p>
 
-<p><img src="/images/3.png" alt="结构"></p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    call f
-</code></pre></div>
-<p>call f 是两步操作构成的
-- 将 eip 的值入栈。
-- 将 f所指向指令的地址放入 eip中</p>
+<p>涉及到了 <strong>中断上下文切换</strong> 以及<strong>系统调用的三层皮</strong></p>
 
-<p>执行完之后，程序就会跳转到f: 指向的命令中执行：</p>
+<p>6、<a href="http://www.siplexy.me/Linux_6.html">分析Linux内核创建一个新进程的过程</a></p>
 
-<p>栈结构：
-<img src="/images/4.png" alt="结构"></p>
+<p>主要内容是 <strong>进程简析</strong></p>
 
-<p>f:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    pushl   %ebp
-    movl    %esp, %ebp
-</code></pre></div>
-<p>前两条和main中相同</p>
+<p>涉及到了 进程控制块（<strong>task_struct</strong>）的结构以及是如何通过<strong>do_fork()</strong>创建一个进程的</p>
 
-<p>这时候栈结构我们可以发现。栈在逻辑上的划分：！！！函数调用栈</p>
+<p>7、 <a href="http://www.siplexy.me/Linux_7.html">Linux内核如何装载和启动一个可执行程序</a></p>
 
-<p>栈结构：main栈和f栈</p>
+<p>主要内容是<strong>程序的装载和启动</strong></p>
 
-<p><img src="/images/5.png" alt="结构"></p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    subl    $4, %esp
-    movl    8(%ebp), %eax
-    movl    %eax, (%esp)
-</code></pre></div>
-<p>关键是这三条指令 通过栈结构 
-首先是分配一块空的空间 然后
-我们可以发现ebp指向的是我们之前调用f中传入的参数 1 
-所以eax = 1变成了</p>
+<p>与上次的内容紧密相连，程序在创建完进程之后如何调用自己的执行路径而完全的脱离父进程。</p>
 
-<p>栈结构：</p>
+<p>涉及到了<strong>程序是如何构建的</strong>、<strong>程序执行的执行环境</strong>以及<strong>execuve的具体方法</strong></p>
 
-<p><img src="/images/6.png" alt="结构"></p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    call    g
-</code></pre></div>
-<p>栈结构：</p>
+<p>8、 <a href="http://www.siplexy.me/Linux_8.html">理解进程调度时机跟踪分析进程调度与进程切换的过程</a></p>
 
-<p><img src="/images/7.png" alt="结构"></p>
+<p>主要内容是 <strong>进程切换</strong></p>
 
-<p>保存eip，并给eip赋值为g指令的地址，进行跳转</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    pushl   %ebp
-    movl    %esp, %ebp
-    movl    8(%ebp), %eax
-    subl    $3, %eax
-</code></pre></div>
-<p>前两条指令同样是enter操作</p>
+<p>涉及到了 <strong>进程上下文切换</strong> 以及 <strong>进程的一般执行过程</strong></p>
 
-<p>栈结构：</p>
+<h3>二、总结</h3>
 
-<p><img src="/images/8.png" alt="结构"></p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    movl    8(%ebp), %eax
-</code></pre></div>
-<p>栈结构：</p>
+<p>这门课首先学习了操作系统在运行程序过程中的一些基本原理（函数调用栈以及中断上下文的切换这些）</p>
 
-<p><img src="/images/9.png" alt="结构"></p>
+<p>然后主要介绍了 操作系统系统调用的实现，以及进程的创建，加载和调度。</p>
 
-<p>通过栈结构知道 将参数放入eax中
-然后 </p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    subl    $3, %eax
-</code></pre></div>
-<p>将eax的值-3并放入eax中</p>
+<p>带我们从这些角度了解Linux 建立起了一个宏观概念</p>
 
-<p>栈结构：</p>
+<p>我个人特别喜欢Linux内核在进程调度的一个感觉。</p>
 
-<p><img src="/images/10.png" alt="结构"></p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    popl    %ebp
-</code></pre></div>
-<p>栈结构：</p>
+<p>就是通过 函数调用栈的结构特性。不断利用重复的代码 利用结构不变性和参数的逻辑上不变性</p>
 
-<p><img src="/images/11.png" alt="结构"></p>
+<p>构造出了 类似庄生梦蝶的效果   我觉得 这种循环的异常美妙的。</p>
 
-<p>可以看到esp指向的上一个函数调用栈的基址
-popl恢复上一个函数调用栈的地址</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    ret
-</code></pre></div>
-<p>ret 和call相反 popl eip 将esp弹出并赋值给eip</p>
+<p>但是 Linux 操作系统的内容远不止这些。内存寻址内存分配回收   文件系统对文件资源的管理  等等等</p>
 
-<p>栈结构：</p>
+<p>还有很多 东西需要我们去学习 。。</p>
 
-<p><img src="/images/12.png" alt="结构"></p>
-
-<p>使得程序从上次调用的地方开始执行
-即：
-f:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    leave
-    ret
-</code></pre></div>
-<p>leave 是和 enter 相反的过程
-相当于</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    movl %ebp,%esp
-    popl %ebp
-</code></pre></div>
-<p>栈结构：movl %ebp,%esp</p>
-
-<p><img src="/images/13.png" alt="结构"></p>
-
-<p>栈结构：popl %ebp</p>
-
-<p><img src="/images/14.png" alt="结构"></p>
-
-<p>ebp的值为上一个之前保存的上一个函数调用栈的栈底地址
-最后 ret 回到 main</p>
-
-<p>栈结构:</p>
-
-<p><img src="/images/15.png" alt="结构"></p>
-
-<p>main:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    addl    $2, %eax
-    leave
-    ret
-</code></pre></div>
-<p>栈结构:</p>
-
-<p><img src="/images/16.png" alt="结构"></p>
-
-<p>之前的计算我们可以发现都是把
-结果放在eax里的</p>
-
-<p>所以 可以发现 return的值就保存在这里</p>
-
-<p>所以 直接 通过eax进行计算
-最后恢复保存的栈底并退出</p>
-
-<p>完成整个程序的执行过程</p>
-
-<p>实验截图：</p>
-
-<p><img src="/images/sy1.png" alt="结构"></p>
-
-<p><img src="/images/sy2.png" alt="结构"></p>
-
-<h3>四、总结</h3>
-
-<p>冯诺依曼体系结构实际上就是按照线性的内存结构 执行程序的过程。
-由于 结构是线性的，所以很容易找到数据所在的位置
-比如：充分利用函数调用栈的机制，可以很容易找到上个函数传递过来的参数</p>
-
-<p>除了内存意外，计算机在运行过程中，还需要关注体系结构中的寄存器。</p>
-
-<p>不同的寄存器存放了不同的信息，记录数据和指令的位置。</p>
-
-<blockquote>
-<h3><a href="http://www.cnblogs.com/Quincy/archive/2012/03/27/2418835.html">有一个关于函数调用栈的细节</a></h3>
-
-<p>就是为什么向下增长。因为觉得向上增长才是很自然地事情
-查了一下大概有两个理由：
-1. 这样的就不用给栈和堆划分明显的分界线
-2. 由于堆是向上增长的，所以可以充分利用进程的内存空间</p>
-</blockquote>
-
-<p>等价指令：</p>
-
-<p>call $xxx</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    push eip
-    movl $xxx,eip
-</code></pre></div>
-<p>ret</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    popl eip
-</code></pre></div>
-<p>pushl $xxx</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    subl $4,%esp
-    movl $xxx,%esp
-</code></pre></div>
-<p>enter</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">   push %ebp
-   movl %esp,%ebp
-</code></pre></div>
-<p>leave</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">    movl %ebp,%esp
-    popl %ebp
-</code></pre></div>
-<hr>
-
-<p>附：</p>
-
-<ul>
-<li><p><a href="http://m15934133625.blog.163.com/blog/static/246003087201526102220519/#">执行sed –e ‘/^\s*./d’ test<em>main.s &gt; test</em>main1.s此命令会删除掉以空格和点开头的行，方便阅读。</a></p></li>
-<li><p><a href="http://itdreamerchen.com/%E7%90%86%E8%A7%A3c%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/">objdump 反汇编</a></p></li>
-</ul>
+<p>感谢孟宁老师。给我们 带来了一场非常棒的内核体验！</p>
 
   </div>
 </div>

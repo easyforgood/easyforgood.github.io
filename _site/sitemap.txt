@@ -1,11 +1,15 @@
 
 http://easyforgood.github.io/Hello.html
 http://easyforgood.github.io/Linux.html
+http://easyforgood.github.io/Linux_1.html
+http://easyforgood.github.io/Linux_18.html
 http://easyforgood.github.io/Linux_2.html
 http://easyforgood.github.io/Linux_3.html
 http://easyforgood.github.io/Linux_45.html
 http://easyforgood.github.io/Linux_6.html
 http://easyforgood.github.io/Linux_7.html
+http://easyforgood.github.io/Linux_8.html
+http://easyforgood.github.io/Linux_Read.html
 http://easyforgood.github.io/archive.html
 http://easyforgood.github.io/atom.xml
 http://easyforgood.github.io/categories.html

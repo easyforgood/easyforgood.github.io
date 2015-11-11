@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>Tags</title>
+    <title>Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程</title>
     
     <meta name="author" content="siplexy">
 
@@ -155,7 +155,7 @@
     
       
       	
-      	<li class="active"><a href="/tags.html" class="active">Tags</a></li>
+      	<li><a href="/tags.html">Tags</a></li>
       	
       
     
@@ -176,116 +176,117 @@
       <div class="container">
         
 <div class="page-header">
-  <h1>Tags </h1>
+  <h1>Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程 </h1>
 </div>
 
 <div class="row">
   <div class="col-xs-12">
-    
+    <h3>一、进程调度的基本知识</h3>
 
-<ul class="tag_box inline">
-    
-  
+<h4>1. linux进程调度的时机</h4>
 
+<p><strong>调度时机只是判断是否调度但是不一定真的调度</strong></p>
 
-  
-     
-    	<li><a href="/tags.html#intro-ref">intro <span>1</span></a></li>
-     
-    	<li><a href="/tags.html#beginner-ref">beginner <span>1</span></a></li>
-     
-    	<li><a href="/tags.html#jekyll-ref">jekyll <span>1</span></a></li>
-     
-    	<li><a href="/tags.html#tutorial-ref">tutorial <span>1</span></a></li>
-    
-  
-
-
-
+<ul>
+<li>进程状态转换的时刻：进程终止、进程睡眠  例如 调用sleep() wait()  调用sh</li>
+<li>当前进程的时间片用完时  和中断返回一样</li>
+<li>设备驱动程序 设备驱动程序执行长而重复的任务时，直接调用调度程序</li>
+<li>进程从中断、异常及系统调用返回到用户态时 都会回到 ret<em>from</em>sys<em>call 对need</em>resched判断是否需要调度</li>
 </ul>
 
+<p>老师的站在另外一个角度：</p>
 
- 
-  <h2 id="intro-ref">intro</h2>
-  <ul>
-      
-    
+<ul>
+<li>中断处理过程返回会调用 </li>
+<li>内核线程可以直接调用schedule()进行进程切换</li>
+<li>用户态进程无法直接调用。只能在进入内核态后才有机会。</li>
+</ul>
 
+<h4>2. 时钟中断进程切换的简易流程(感觉其他的切换只是这个的一部分)</h4>
 
-  
-    
-      
-      	
-      	<li><a href="/lessons/2011/12/29/jekyll-introduction">Jekyll Introduction</a></li>
-      	
-      
-    
-  
+<p><strong>schedule（）</strong>：主要函数进程调度函数完成进程的选择和上下文切换
+<strong>do_timer（）</strong>：时钟函数 
+参考书上一段资料：</p>
 
+<blockquote>
+<p>在CFS(unix引入的公平调度器)中，tick中断（do<em>timer()）首先更新调度信息。然后调整当前进程在红黑树中的位置。调整完成后如果发现当前进程不再是最左边的叶子(左边代表优先级最高)，就标记need</em>resched标志</p>
+</blockquote>
 
+<p><strong>ret<em>from</em>sys_call（）</strong>：当一个系统调用或中断完成时，该函数被调用，用于处理一些收尾工作。</p>
 
-  </ul>
- 
-  <h2 id="beginner-ref">beginner</h2>
-  <ul>
-      
-    
+<p>do<em>timer() 修改进程信息、置标志位 --------&gt; ret</em>from<em>sys</em>call 判断标志位 --------&gt; call SYMBOL_NAME(schedule) 调用  schedule（）完成切换</p>
 
+<h3>二、进程切换过程跟踪 (没啥内容)</h3>
 
-  
-    
-      
-      	
-      	<li><a href="/lessons/2011/12/29/jekyll-introduction">Jekyll Introduction</a></li>
-      	
-      
-    
-  
+<p>切换主要流程：
+<img src="./1430066325270.png" alt="Alt text"></p>
 
+<p>先进入schedule()
+<img src="./1430066602474.png" alt="Alt text"></p>
 
+<p>通过 pick<em>next</em>task 找到下一个切换的进程</p>
 
-  </ul>
- 
-  <h2 id="jekyll-ref">jekyll</h2>
-  <ul>
-      
-    
+<p><img src="./1430066690011.png" alt="Alt text"></p>
 
+<p>进入context_switch进行进程上下文切换</p>
 
-  
-    
-      
-      	
-      	<li><a href="/lessons/2011/12/29/jekyll-introduction">Jekyll Introduction</a></li>
-      	
-      
-    
-  
+<p><img src="./1430066761279.png" alt="Alt text"></p>
 
+<p>这里跟踪到了 _<em>switch</em>to但是没有找到switch_to</p>
 
+<p>switch<em>to 主要是esp和eip切换
+_</em>switch<em>to 网上找的的说法是
+切换浮点部件寄存器和状态 fpu
+重设TSS的esp0 
+设置current</em>task 这个还是很重要的。
+<img src="./1430067352414.png" alt="Alt text"></p>
 
-  </ul>
- 
-  <h2 id="tutorial-ref">tutorial</h2>
-  <ul>
-      
-    
+<p>另外一个小细节</p>
 
+<p>由于调用_<em>switch</em>to时不是通过call指令，而是jmp</p>
 
-  
-    
-      
-      	
-      	<li><a href="/lessons/2011/12/29/jekyll-introduction">Jekyll Introduction</a></li>
-      	
-      
-    
-  
+<p>然后 _<em>switch</em>to也会return 这是就会执行标号1的内容了</p>
 
+<h3>三、switch_to 进程切换简要分析</h3>
 
+<p>在内核态，进程切换主要分两步：</p>
 
-  </ul>
+<p>1：切换页全局目录</p>
 
+<p>2：切换堆栈和硬件上下文 switch_to 实现</p>
+
+<p>switch_to:</p>
+
+<ul>
+<li>把eflags和ebp寄存器保存到prev内核栈中。</li>
+<li>esp保存到prev-&gt;thread.sp 就是保存在进程状态描述符tss中。 把$1f保存到prev-&gt;thread.ip</li>
+<li>恢复next进程的堆栈  把next指向的新进程的thread.esp保存到esp中，把next-&gt;thread.ip保存到eip中</li>
+</ul>
+
+<p>_<em>switch</em>to:</p>
+
+<p>切换内核堆栈之后，TSS段也要相应的改变</p>
+
+<blockquote>
+<p>这是因为对于linux系统来说同一个CPU上所有的进程共用一个TSS，进程切换了，因此TSS需要随之改变。</p>
+
+<p>linux系统中主要从两个方面用到了TSS：</p>
+
+<p>(1)任何进程从用户态陷入内核态都必须从TSS获得内核堆栈指针</p>
+
+<p>(2)用户态读写IO需要访问TSS的权限位图。</p>
+</blockquote>
+
+<h3>四、总结</h3>
+
+<p>马上要考试了。各位加油</p>
+
+<p>参考文献：</p>
+
+<ul>
+<li><p>linux kernel development  一书 Robert.Lover</p></li>
+<li><p><a href="http://oss.org.cn/kernel-book/">深入分析Linux内核源码</a></p></li>
+</ul>
 
   </div>
 </div>
