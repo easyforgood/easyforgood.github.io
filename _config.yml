@@ -3,11 +3,11 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
-subtitle:
-description:
-author: John Doe
-language:
+title: Sip 的 solo
+subtitle: 不用说话，安静聆听
+description: 
+author: Sip Pi
+language: zh-CN
 timezone:
 
 # URL
@@ -68,7 +68,10 @@ theme: pacman
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-  type:
+  type: git
+  repo:  git@github.com:easyforgood/easyforgood.github.io.git
+  branch: master 
+  message: " {{ now('YYYY-MM-DD HH:mm:ss') }} by hexo deploy"
 
 stylus:
   compress: true
