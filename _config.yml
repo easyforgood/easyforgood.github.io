@@ -1,4 +1,4 @@
-# Hexo Configuration
+#Hexo Configuration
 ## Docs: https://hexo.io/docs/configuration.html
 ## Source: https://github.com/hexojs/hexo/
 
@@ -42,7 +42,17 @@ highlight:
   line_number: true
   auto_detect: false
   tab_replace:
-
+#### Image
+imglogo:
+  enable: true             ## display image logo true/false.
+  src: img/logo.svg        ## `.svg` and `.png` are recommended,please put image into the theme folder `/pacman/source/img`.
+favicon: img/favicon.ico   ## size:32px*32px,`.ico` is recommended,please put image into the theme folder `/pacman/source/img`.     
+apple_icon: img/pacman.jpg ## size:114px*114px,please put image into the theme folder `/pacman/source/img`.
+##
+author_img_enable: true###
+author_img: ../img/pic.png
+dataURI: false
+author_img_data: ''
 # Category & Tag
 default_category: uncategorized
 category_map:
