@@ -4,12 +4,12 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>pic_20150325 | Sip 的 solo</title>
+    <title>junit5的相关说明 | Sip 的 solo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Sip Pi">
     
-    <meta name="description" content="">
+    <meta name="description" content="Junit上一次大版本更新已经是在10年前了。Junit后来变得维护，出现了有很多未解决的bug以及并没有融入java尤其是java8的新特性导致已经有些跟不上时代了。因此Marc Philipp 进行众筹junit-lamabda活动，让更多的开发者参与到新的junit项目来，为junit提供更好">
     
     
     
@@ -65,15 +65,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2016/03/28/pic-20150325/" title="pic_20150325" itemprop="url">pic_20150325</a>
+      <a href="/2016/03/31/junit5的相关说明/" title="junit5的相关说明" itemprop="url">junit5的相关说明</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://yoursite.com" title="Sip Pi">Sip Pi</a>
     </p>
   <p class="article-time">
-    <time datetime="2016-03-28T14:32:46.000Z" itemprop="datePublished">2016-03-28</time>
-    更新日期:<time datetime="2016-03-28T14:40:24.000Z" itemprop="dateModified">2016-03-28</time>
+    <time datetime="2016-03-30T16:50:15.000Z" itemprop="datePublished">2016-03-31</time>
+    更新日期:<time datetime="2016-03-30T16:51:47.000Z" itemprop="dateModified">2016-03-31</time>
     
   </p>
 </header>
@@ -85,27 +85,68 @@
 		
 		</div>
 		
-		<p><img src="http://7xs4hl.com1.z0.glb.clouddn.com/sketch-original64460d1c942a2059562f19d29099f7be9f8fe900531d8-nUiuyu_fw658.jpg" alt="enter image description here"><br><img src="http://7xs4hl.com1.z0.glb.clouddn.com/sketch-meIMG_20160323_201233.jpg" alt="enter image description here"></p>
+		<blockquote>
+<p> Junit上一次大版本更新已经是在10年前了。Junit后来变得维护，出现了有很多未解决的bug以及并没有融入java尤其是java8的新特性导致已经有些跟不上时代了。因此Marc Philipp 进行众筹junit-lamabda活动，让更多的开发者参与到新的junit项目来，为junit提供更好服务和扩展。<br> junit 5 是基于 junit-lamabda诞生的。</p>
+</blockquote>
+<p><em>开源软件要不有基金会。要不然有社区氛围才行。不然真的很难坚持，众筹这个方法挺好</em></p>
+<p><a href="https://www.indiegogo.com/projects/junit-lambda#/" target="_blank" rel="external">indiegogo的众筹首页</a></p>
+<hr>
+<p>#####目前版本情况：</p>
+<p>junit 5 已经推出了alpha版本，预计今年4月底的时候会发布5.0 M1。</p>
+<p><em><a href="https://github.com/junit-team/junit5/milestones" target="_blank" rel="external">github上里程碑</a></em></p>
+<p>#####关于新的特点：</p>
+<p><em>具体可以参考<a href="http://junit.org/junit5/" target="_blank" rel="external">user guide </a></em></p>
+<ol>
+<li>Annotation 产生了变化 之前的feature 特性有不同</li>
+</ol>
+<ul>
+<li>@Before and @After no longer exist; use @BeforeEach and @AfterEach instead.</li>
+<li>@BeforeClass and @AfterClass no longer exist; use @BeforeAll and @AfterAll instead.</li>
+<li>@Ignore no longer exists: use @Disabled instead.</li>
+<li>@Category no longer exists; use @Tag instead.</li>
+<li>@RunWith no longer exists; superseded by @ExtendWith.</li>
+<li>@Rule and @ClassRule no longer exist; superseded by @ExtendWith.</li>
+</ul>
+<ol>
+<li>grouped assertions，支持lamada以及assert 多个值进行判断</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//junit4 断言只能判断一个值就会中断</span></span><br><span class="line">assertAll(<span class="string">"address"</span>,</span><br><span class="line">            () -&gt; assertEquals(<span class="string">"John"</span>, address.getFirstName()),</span><br><span class="line">            () -&gt; assertEquals(<span class="string">"User"</span>, address.getLastName())</span><br><span class="line">        );</span><br></pre></td></tr></table></figure>
+<ol>
+<li><p><strong>extension model</strong>  扩展你的程序<br>提供了 单独的 extension api。<br>之前必须要重写 runner 或者rule 或者class rule 才可以。 扩展性更加统一了。强大了。</p>
+</li>
+<li><p><strong>The JUnit 5 Launcher API</strong> 更加强大而且独立的启动选项<br>主要强大的地方在于提供了  discover, filter, and execute JUnit tests. 的机制。</p>
+<p>独立性比原来更好。可以从外部配置以及执行<br>而且希望第三方运行库包括Spock, Cucumber, and FitNesse 可以结合进来。</p>
+</li>
+<li><p>其他小地方</p>
+</li>
+</ol>
+<ul>
+<li>可以在test方法里面添加参数 以及 添加日志信息<br>MethodParameterResolver<br>这个地方是可以通过extension api扩展的</li>
+<li><p>嵌套测试</p>
+</li>
+<li><p>对测试异常的支持 expectthrows 提供简单的方式支持复杂的异常断言</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Throwable exception = expectThrows(IllegalArgumentException.class,</span><br><span class="line">            () -&gt; &#123; <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"a message"</span>); &#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    assertEquals(<span class="string">"a message"</span>, exception.getMessage());</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<hr>
+<p>参考：</p>
+<p><a href="http://blog.csdn.net/chszs/article/details/50662639" target="_blank" rel="external">http://blog.csdn.net/chszs/article/details/50662639</a></p>
+<p><a href="http://www.infoq.com/cn/news/2016/03/junit5-alpha" target="_blank" rel="external">http://www.infoq.com/cn/news/2016/03/junit5-alpha</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/动漫/">动漫</a><a href="/tags/手绘/">手绘</a>
+  <span></span> <a href="/tags/测试/">测试</a>
   </div>
 
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/手绘/">手绘</a>
-</div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://yoursite.com/2016/03/28/pic-20150325/" data-title="pic_20150325 | Sip 的 solo" data-tsina="null" class="share clearfix">
+  <div data-url="http://yoursite.com/2016/03/31/junit5的相关说明/" data-title="junit5的相关说明 | Sip 的 solo" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -114,19 +155,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2016/03/28/pic-2015-03-28/" title="pic-2015-03-28">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  pic-2015-03-28</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2016/03/22/pic-2016-03-22/"  title="pic-2016-03-22">
+<a href="/2016/03/28/pic-2015-03-28/"  title="pic-2015-03-28">
  <strong>NEXT:</strong><br/> 
- <span>pic-2016-03-22
+ <span>pic-2015-03-28
 </span>
 </a>
 </div>
