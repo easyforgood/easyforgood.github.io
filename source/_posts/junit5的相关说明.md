@@ -14,7 +14,7 @@ categories:
 
 ------------------------------------
 
-#####目前版本情况：
+##### 目前版本情况：
 
 junit 5 已经推出了alpha版本，预计今年4月底的时候会发布5.0 M1。
 
@@ -22,7 +22,7 @@ junit 5 已经推出了alpha版本，预计今年4月底的时候会发布5.0 M1
 *[github上里程碑](https://github.com/junit-team/junit5/milestones)*
 
 
-#####关于新的特点：
+##### 关于新的特点：
 
 *具体可以参考[user guide ](http://junit.org/junit5/)*
 

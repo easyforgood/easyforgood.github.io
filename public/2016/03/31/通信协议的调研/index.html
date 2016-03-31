@@ -4,12 +4,16 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>画稿 2016-03-21 | Sip 的 solo</title>
+    <title>关于通信协议的mark | Sip 的 solo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Sip Pi">
     
-    <meta name="description" content="">
+    <meta name="description" content="讲述了二进制通信协议的演进过程
+  http://blog.chinaunix.net/uid-27105712-id-3266286.html  //文本协议 二进制协议优势就是性能和安全性。但是调试麻烦
+
+tlv tag—type—length—value
+  http://www.leicix">
     
     
     
@@ -65,15 +69,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2016/03/22/画稿-2016-03-21/" title="画稿 2016-03-21" itemprop="url">画稿 2016-03-21</a>
+      <a href="/2016/03/31/通信协议的调研/" title="关于通信协议的mark" itemprop="url">关于通信协议的mark</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://yoursite.com" title="Sip Pi">Sip Pi</a>
     </p>
   <p class="article-time">
-    <time datetime="2016-03-21T17:10:46.000Z" itemprop="datePublished">2016-03-22</time>
-    更新日期:<time datetime="2016-03-21T17:51:42.000Z" itemprop="dateModified">2016-03-22</time>
+    <time datetime="2016-03-30T16:50:15.000Z" itemprop="datePublished">2016-03-31</time>
+    更新日期:<time datetime="2016-03-31T16:52:22.000Z" itemprop="dateModified">2016-04-01</time>
     
   </p>
 </header>
@@ -82,30 +86,53 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
-		
+		<ol class="toc"><li class="toc-item toc-level-6"><a class="toc-link" href="#不可见字符二进制-可见字符二进制"><span class="toc-number">1.</span> <span class="toc-text">不可见字符二进制   可见字符二进制</span></a></li></ol>
 		</div>
 		
-		<p><img src="http://7xs4hl.com1.z0.glb.clouddn.com/sketch-originala2e21f0afeeda46bbda8f204a540d76564348d3747741-33hm4z_fw658.png" alt="enter image description here"><br><img src="http://7xs4hl.com1.z0.glb.clouddn.com/sketch-meIMG_20160322_014914.jpg" alt="enter image description here"></p>
-  
+		<ul>
+<li><p>讲述了二进制通信协议的演进过程</p>
+<p>  <a href="http://blog.chinaunix.net/uid-27105712-id-3266286.html" target="_blank" rel="external">http://blog.chinaunix.net/uid-27105712-id-3266286.html</a><br>  //文本协议 二进制协议优势就是性能和安全性。但是调试麻烦</p>
+</li>
+<li><p>tlv tag—type—length—value</p>
+<p>  <a href="http://www.leicixiang.cn/type-length-value/" target="_blank" rel="external">http://www.leicixiang.cn/type-length-value/</a>    tlv 格式距离 翻译wikipedia</p>
+</li>
+<li><p>二进制字节块 语言亲和度  优点紧凑（性能优） 易读性差（安全）</p>
+<p>  <a href="http://coolshell.cn/tag/json" target="_blank" rel="external">http://coolshell.cn/tag/json</a></p>
+<p>  <a href="http://coolshell.cn/articles/4905.html" target="_blank" rel="external">http://coolshell.cn/articles/4905.html</a></p>
+</li>
+<li><p>Protocol Buffers  !! </p>
+<p>  <a href="http://www.ibm.com/developerworks/cn/linux/l-cn-gpb/" target="_blank" rel="external">http://www.ibm.com/developerworks/cn/linux/l-cn-gpb/</a></p>
+<p>  <a href="https://developers.google.com/protocol-buffers/docs/overview" target="_blank" rel="external">https://developers.google.com/protocol-buffers/docs/overview</a></p>
+</li>
+<li><p>常用协议对比</p>
+<p>  <a href="http://www.cnblogs.com/shrimps/archive/2008/11/06/1327988.html" target="_blank" rel="external">http://www.cnblogs.com/shrimps/archive/2008/11/06/1327988.html</a></p>
+<p>  <a href="http://www.oschina.net/translate/choose-protocol-buffers" target="_blank" rel="external">http://www.oschina.net/translate/choose-protocol-buffers</a></p>
+</li>
+<li><p>—ASN.1 这个标准 </p>
+<p>  <a href="http://blog.sina.com.cn/s/blog_72bb4bd00101cz7h.html" target="_blank" rel="external">http://blog.sina.com.cn/s/blog_72bb4bd00101cz7h.html</a></p>
+</li>
+</ul>
+<p>//百度百科</p>
+<p>协议主要由以下三个要素组成：</p>
+<p>语法：“如何讲”，数据的格式、编码和信号等级（电平的高低）。</p>
+<p>语义：“讲什么”，数据内容、含义以及控制信息。</p>
+<p>时序：明确通信的顺序、速率匹配和排序 </p>
+<p>Base64编码的作用：由于某些系统中只能使用ASCII字符。Base64就是用来将非ASCII字符的数据转换成ASCII字符的一种方法。它使用下面表中所使用的字符与编码。<br>非ASCII字符：主要就是二进制 比如说图片或者其他信息</p>
+<h6 id="不可见字符二进制-可见字符二进制"><a href="#不可见字符二进制-可见字符二进制" class="headerlink" title="不可见字符二进制   可见字符二进制"></a>不可见字符二进制   可见字符二进制</h6>  
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/动漫/">动漫</a><a href="/tags/手绘/">手绘</a>
+  <span></span> <a href="/tags/通信协议/">通信协议</a><a href="/tags/技术调研/">技术调研</a>
   </div>
 
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/手绘/">手绘</a>
-</div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://yoursite.com/2016/03/22/画稿-2016-03-21/" data-title="画稿 2016-03-21 | Sip 的 solo" data-tsina="null" class="share clearfix">
+  <div data-url="http://yoursite.com/2016/03/31/通信协议的调研/" data-title="关于通信协议的mark | Sip 的 solo" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -115,13 +142,21 @@
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2016/03/22/pic-2016-03-22/" title="pic-2016-03-22">
+ <a href="/2016/03/31/Linux_3/" title="Linux内核分析作业3：跟踪分析Linux内核的启动过程">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  pic-2016-03-22</span>
+  Linux内核分析作业3：跟踪分析Linux内核的启动过程</span>
 </a>
 </div>
 
+
+<div class="next">
+<a href="/2016/03/31/Linux_Read/"  title="Linux内核读书笔记1">
+ <strong>NEXT:</strong><br/> 
+ <span>Linux内核读书笔记1
+</span>
+</a>
+</div>
 
 </nav>
 
@@ -131,7 +166,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
-  
+  <ol class="toc"><li class="toc-item toc-level-6"><a class="toc-link" href="#不可见字符二进制-可见字符二进制"><span class="toc-number">1.</span> <span class="toc-text">不可见字符二进制   可见字符二进制</span></a></li></ol>
   </div>
 
 <div id="asidepart">
