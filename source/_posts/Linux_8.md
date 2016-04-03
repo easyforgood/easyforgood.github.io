@@ -45,18 +45,18 @@ do_timer() 修改进程信息、置标志位 --------> ret_from_sys_call 判断�
 ### 二、进程切换过程跟踪 (没啥内容)
 
 切换主要流程：
-![Alt text](./1430066325270.png)
+![Alt text](/1430066325270.png)
 
 先进入schedule()
-![Alt text](./1430066602474.png)
+![Alt text](/1430066602474.png)
 
 通过 pick_next_task 找到下一个切换的进程
 
-![Alt text](./1430066690011.png)
+![Alt text](/1430066690011.png)
 
 进入context_switch进行进程上下文切换
 
-![Alt text](./1430066761279.png)
+![Alt text](/1430066761279.png)
 
 
 这里跟踪到了 __switch_to但是没有找到switch_to
@@ -66,7 +66,7 @@ __switch_to 网上找的的说法是
 切换浮点部件寄存器和状态 fpu
 重设TSS的esp0 
 设置current_task 这个还是很重要的。
-![Alt text](./1430067352414.png)
+![Alt text](/1430067352414.png)
 
 另外一个小细节
 

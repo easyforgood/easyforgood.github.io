@@ -103,7 +103,7 @@ categories: linux内核分析
 
 整体流程：
 
-![enter image description here](./linux6/lab1.png)
+![enter image description here](/linux6/lab1.png)
 
 解释我遇到的两个问题：
 
@@ -174,7 +174,6 @@ linux会恢复cpu的内容，所以thread->ip自然就被恢复到eip寄存器�
 
 仔细琢磨就会发现原来，fork的父子进程都是用同样的代码。
 
-但是。。写不下去了。。。。看的太累了
 
 
 

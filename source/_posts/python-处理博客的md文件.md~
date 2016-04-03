@@ -1,0 +1,44 @@
+---
+title: python 处理博客的md文件
+date: 2016-04-01 02:04:42
+tags:
+categories:
+---
+直接贴代码好了。后面解释。很好玩。list comprehension 
+
+``` python
+#  -*- coding:utf-8 -*-
+import re
+import os
+
+def changeLine(str=""):
+	p = re.compile("^#+")
+	match=p.match(str)
+	if match: #and match.group(1).start:
+		str= match.group(0)+ " "+p.split(str)[1]
+	return str
+
+flist=os.listdir("./")
+
+mdflist=[res for res  in flist if re.compile("^.*\.md$").match(res)]
+
+filename='./Linux.md'
+
+# print changeLine("#####1231312");
+# print changeLine("12312312");
+for filename in flist:
+	with open(filename,"r+") as f:
+		newline=[changeLine(lineStr) for lineStr in f.readlines()]
+ 		f.seek(0)
+		f.writelines(newline)
+
+
+```
+
+
+
+### 总结： 
+
+list  comprehension很方便但是涉及到if判断就不行了。和lambda一样，快速筛选list信息但是并不能做负责的处理 
+
+

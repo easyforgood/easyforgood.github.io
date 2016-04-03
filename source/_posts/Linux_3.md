@@ -25,7 +25,7 @@ categories: linux内核分析
 
 查看项目文件夹：
 
-![enter image description here](./linux3/lab3_1.png)
+![enter image description here](/linux3/lab3_1.png)
 
 
 #### 3.设置编译选项并编译内核
@@ -36,7 +36,7 @@ categories: linux内核分析
 
 截图：
 
-![enter image description here](./linux3/lab3_2.png)
+![enter image description here](/linux3/lab3_2.png)
 
 进入图像化配置界面：
 
@@ -49,7 +49,7 @@ categories: linux内核分析
 
 截图：
 
-![enter image description here](./linux3/lab3_5.png)
+![enter image description here](/linux3/lab3_5.png)
 
 最后编译（等待若干时间后）：
 
@@ -59,7 +59,7 @@ categories: linux内核分析
 
 - 提示 “unable to find ncurses libraries ...”
 
-![enter image description here](./linux3/bug1.png)
+![enter image description here](/linux3/bug1.png)
 
 解决办法：安装 libncurses5-dev  
 
@@ -67,7 +67,7 @@ categories: linux内核分析
 
 - Your display is too small to run menuconfig
 
-![enter image description here](./linux3/bug2.png)
+![enter image description here](/linux3/bug2.png)
 
 解决方法：直接把窗口最大化就行了！
 
@@ -93,7 +93,7 @@ categories: linux内核分析
 		
 运行截图：
 
-![enter image description here](./linux3/lab3_4.png)
+![enter image description here](/linux3/lab3_4.png)
 
 启动调试：
 
@@ -121,7 +121,7 @@ categories: linux内核分析
 
 截图：
 	
-![enter image description here](./linux3/lab3_7.png)	
+![enter image description here](/linux3/lab3_7.png)	
 	
 
 ### 二、启动过程分析 

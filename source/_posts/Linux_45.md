@@ -15,7 +15,7 @@ API实现的系统调用流程图：
 
 <div style="margin:0 auto;text-align:center;width:100%">
 
-<img src="./linux5/lab1.png"  />
+<img src="/linux5/lab1.png"  />
 
 </div>
 
@@ -23,7 +23,7 @@ API实现的系统调用流程图：
 
 <div style="margin:0 auto;text-align:center;width:100%">
 
-<img src="./linux5/lab2.png"  />
+<img src="/linux5/lab2.png"  />
 
 </div>
 
@@ -74,7 +74,7 @@ SYSCALL_DEFINE0(getpid)
 
 <div style="margin:0 auto;text-align:center;width:100%">
 
-<img src="./linux4/lab1.png"  />
+<img src="/linux4/lab1.png"  />
 
 </div>
 
@@ -82,7 +82,7 @@ SYSCALL_DEFINE0(getpid)
 
 <div style="margin:0 auto;text-align:center;width:100%">
 
-<img src="./linux4/lab2.png"  />
+<img src="/linux4/lab2.png"  />
 
 </div>
 
@@ -90,7 +90,7 @@ SYSCALL_DEFINE0(getpid)
 
 <div style="margin:0 auto;text-align:center;width:100%">
 
-<img src="./linux4/lab3.png"  />
+<img src="/linux4/lab3.png"  />
 
 </div>
 
@@ -98,7 +98,7 @@ SYSCALL_DEFINE0(getpid)
 
 <div style="margin:0 auto;text-align:center;width:100%">
 
-<img src="./linux4/lab4.png"  />
+<img src="/linux4/lab4.png"  />
 
 </div>
 

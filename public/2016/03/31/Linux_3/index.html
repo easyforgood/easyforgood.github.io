@@ -75,7 +75,7 @@
     </p>
   <p class="article-time">
     <time datetime="2016-03-30T16:50:15.000Z" itemprop="datePublished">2016-03-31</time>
-    更新日期:<time datetime="2016-03-31T16:52:22.000Z" itemprop="dateModified">2016-04-01</time>
+    更新日期:<time datetime="2016-03-31T17:01:31.000Z" itemprop="dateModified">2016-04-01</time>
     
   </p>
 </header>
@@ -92,30 +92,30 @@
 <h4 id="2-解压Linux"><a href="#2-解压Linux" class="headerlink" title="2.解压Linux"></a>2.解压Linux</h4><pre><code>xz -d linux-3.18.6.tar.xz
 tar -xvf linux-3.18.6.tar
 </code></pre><p>查看项目文件夹：</p>
-<p><img src="./linux3/lab3_1.png" alt="enter image description here"></p>
+<p><img src="/linux3/lab3_1.png" alt="enter image description here"></p>
 <h4 id="3-设置编译选项并编译内核"><a href="#3-设置编译选项并编译内核" class="headerlink" title="3.设置编译选项并编译内核"></a>3.设置编译选项并编译内核</h4><p>设置成i386的配置：</p>
 <pre><code>make i386_defconfig 
 </code></pre><p>截图：</p>
-<p><img src="./linux3/lab3_2.png" alt="enter image description here"></p>
+<p><img src="/linux3/lab3_2.png" alt="enter image description here"></p>
 <p>进入图像化配置界面：</p>
 <pre><code>make menuconfig
 </code></pre><p>并设置成调试信息开启：</p>
 <pre><code>kernel hacking—&gt;
 [*] compile the kernel with debug info
 </code></pre><p>截图：</p>
-<p><img src="./linux3/lab3_5.png" alt="enter image description here"></p>
+<p><img src="/linux3/lab3_5.png" alt="enter image description here"></p>
 <p>最后编译（等待若干时间后）：</p>
 <pre><code>make
 </code></pre><h4 id="make-menuconfig-遇到的问题："><a href="#make-menuconfig-遇到的问题：" class="headerlink" title="make menuconfig 遇到的问题："></a>make menuconfig 遇到的问题：</h4><ul>
 <li>提示 “unable to find ncurses libraries …”</li>
 </ul>
-<p><img src="./linux3/bug1.png" alt="enter image description here"></p>
+<p><img src="/linux3/bug1.png" alt="enter image description here"></p>
 <p>解决办法：安装 libncurses5-dev  </p>
 <pre><code>sudo apt-get install libncurses5-dev
 </code></pre><ul>
 <li>Your display is too small to run menuconfig</li>
 </ul>
-<p><img src="./linux3/bug2.png" alt="enter image description here"></p>
+<p><img src="/linux3/bug2.png" alt="enter image description here"></p>
 <p>解决方法：直接把窗口最大化就行了！</p>
 <h4 id="4-制作根文件系统"><a href="#4-制作根文件系统" class="headerlink" title="4.制作根文件系统"></a>4.制作根文件系统</h4><pre><code>cd ~/LinuxKernel/
 mkdir rootfs
@@ -130,7 +130,7 @@ find . | cpio -o -Hnewc |gzip -9 &gt; ../rootfs.img
 <h4 id="5-运行menuOS-并进行设置调试"><a href="#5-运行menuOS-并进行设置调试" class="headerlink" title="5.运行menuOS 并进行设置调试"></a>5.运行menuOS 并进行设置调试</h4><p>启动：</p>
 <pre><code>qemu -kernel linux-3.18.6/arch/x86/boot/bzImage -initrd rootfs.img
 </code></pre><p>运行截图：</p>
-<p><img src="./linux3/lab3_4.png" alt="enter image description here"></p>
+<p><img src="/linux3/lab3_4.png" alt="enter image description here"></p>
 <p>启动调试：</p>
 <pre><code>qemu -kernel linux-3.18.6/arch/x86/boot/bzImage -initrd rootfs.img -s -S
 </code></pre><p>注：</p>
@@ -151,7 +151,7 @@ find . | cpio -o -Hnewc |gzip -9 &gt; ../rootfs.img
 
 (gdb)continue 继续运行到下一个断点
 </code></pre><p>截图：</p>
-<p><img src="./linux3/lab3_7.png" alt="enter image description here">    </p>
+<p><img src="/linux3/lab3_7.png" alt="enter image description here">    </p>
 <h3 id="二、启动过程分析"><a href="#二、启动过程分析" class="headerlink" title="二、启动过程分析"></a>二、启动过程分析</h3><p>整体上看，启动流程大致是这样的：</p>
 <div style="margin:0 auto;text-align:center;width:100%"><br><br><img src="./linux3/start1.gif"><br><br></div>
 
@@ -270,10 +270,10 @@ run_init_process(&quot;/bin/sh&quot;);
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2016/04/01/test/" title="">
+ <a href="/2016/03/31/Linux/" title="Linux内核分析————总结">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  (no title)</span>
+  Linux内核分析————总结</span>
 </a>
 </div>
 
@@ -308,7 +308,7 @@ run_init_process(&quot;/bin/sh&quot;);
 		
 			<li><a href="/categories/linux内核分析/" title="linux内核分析">linux内核分析<sup>9</sup></a></li>
 		
-			<li><a href="/categories/手绘/" title="手绘">手绘<sup>4</sup></a></li>
+			<li><a href="/categories/手绘/" title="手绘">手绘<sup>5</sup></a></li>
 		
 		</ul>
 </div>
@@ -321,15 +321,11 @@ run_init_process(&quot;/bin/sh&quot;);
 		
 			<li><a href="/tags/linux/" title="linux">linux<sup>9</sup></a></li>
 		
-			<li><a href="/tags/linux-linux内核/" title="linux linux内核">linux linux内核<sup>0</sup></a></li>
-		
-			<li><a href="/tags/linux-linux内核/" title="linux,linux内核">linux,linux内核<sup>0</sup></a></li>
-		
 			<li><a href="/tags/linux内核/" title="linux内核">linux内核<sup>3</sup></a></li>
 		
-			<li><a href="/tags/动漫/" title="动漫">动漫<sup>4</sup></a></li>
+			<li><a href="/tags/动漫/" title="动漫">动漫<sup>5</sup></a></li>
 		
-			<li><a href="/tags/手绘/" title="手绘">手绘<sup>4</sup></a></li>
+			<li><a href="/tags/手绘/" title="手绘">手绘<sup>5</sup></a></li>
 		
 			<li><a href="/tags/技术调研/" title="技术调研">技术调研<sup>1</sup></a></li>
 		

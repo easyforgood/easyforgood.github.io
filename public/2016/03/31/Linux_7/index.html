@@ -78,7 +78,7 @@ gcc -x cpp">
     </p>
   <p class="article-time">
     <time datetime="2016-03-30T16:50:15.000Z" itemprop="datePublished">2016-03-31</time>
-    更新日期:<time datetime="2016-03-31T16:52:22.000Z" itemprop="dateModified">2016-04-01</time>
+    更新日期:<time datetime="2016-03-31T17:02:26.000Z" itemprop="dateModified">2016-04-01</time>
     
   </p>
 </header>
@@ -129,17 +129,17 @@ gcc -x cpp">
 <p>int main(int argc, char <em>argv[], char </em>envp[]) argc 为参数个数，argv为传递的字符串，envp为环境变量</p>
 </blockquote>
 <h3 id="二、执行过程跟踪"><a href="#二、执行过程跟踪" class="headerlink" title="二、执行过程跟踪"></a>二、执行过程跟踪</h3><p>整体流程简介：</p>
-<p><img src="./linux7/flow.png" alt="enter image description here"></p>
+<p>![enter image description here]zlinux7/flow.png)</p>
 <p>系统调用execvlp()系统调用首先会进入Sys_execve()</p>
 <p>然后由Sys_execve()-&gt;do_execve()-&gt;do_common_execve()</p>
-<p><img src="./linux7/lab2.png" alt="enter image description here"></p>
-<p><img src="./linux7/lab3.png" alt="enter image description here"></p>
+<p><img src="/linux7/lab2.png" alt="enter image description here"></p>
+<p><img src="/linux7/lab3.png" alt="enter image description here"></p>
 <blockquote>
 <p>do_common_execve() 从目标文件的头部(从第一个字节开始)读入若干(128)字节，然后调用另一个函数search_binary_handler()，在那里面让各种可执行程序的处理程序前来认领和处理。内核所支持的每种可执行程序都有个struct linux_binfmt数据结构，通过向内核登记挂入一个队列。而search_binary_handler()，则扫描这个队列，让各个数据结构所提供的处理程序、即各种映像格式、逐一前来认领。如果某个格式的处理程序发现特征相符而，便执行该格式映像的装入和启动。</p>
 </blockquote>
 <p>exec_binprm() -&gt; search_binary_handler ()</p>
-<p><img src="./linux7/lab4.png" alt="enter image description here"></p>
-<p><img src="./linux7/lab5.png" alt="enter image description here"></p>
+<p><img src="/linux7/lab4.png" alt="enter image description here"></p>
+<p><img src="/linux7/lab5.png" alt="enter image description here"></p>
 <pre><code>#define load_elf_binary load_elf32_binary
 static struct linux_binfmt elf_format = {
 .module = THIS_MODULE,
@@ -156,7 +156,7 @@ static struct linux_binfmt elf_format = {
 </blockquote>
 <p>一个是new_ip 一个是new_sp</p>
 <p>最后调用 start_thread()</p>
-<p><img src="./linux7/lab8.png" alt="enter image description here"></p>
+<p><img src="/linux7/lab8.png" alt="enter image description here"></p>
 <pre><code>void start_thread(struct pt_regs *regs, unsigned long eip, unsigned long esp)
 {
 PT_REGS_IP(regs) = eip;
@@ -167,7 +167,7 @@ current-&gt;ptrace &amp;= ~PT_DTRACE;
 <pre><code>struct pt_regs *regs = current_pt_regs();
 </code></pre><p>在前面可以发现，这个pt_regs 就是指向当前进程的进程状态段（thread_info）的pt_regs</p>
 <p>最后进行系统调用即可</p>
-<p><img src="./linux7/lab9.png" alt="enter image description here"></p>
+<p><img src="/linux7/lab9.png" alt="enter image description here"></p>
 <p>（不知道 为什么退出sys_execve()会进入core.c中的schedule函数，不应该是在syscall_exit中进行调用的吗？）</p>
 <h3 id="三、-总结"><a href="#三、-总结" class="headerlink" title="三、 总结"></a>三、 总结</h3><p>之前的fork只是创建了父进程的拷贝，但是还是运行父进程的代码，但那时execve（）却替换了子进程的函数调用栈和修改了eip的指向。</p>
 <p>为什么庄生梦蝶？</p>
@@ -211,9 +211,9 @@ current-&gt;ptrace &amp;= ~PT_DTRACE;
 
 
 <div class="next">
-<a href="/2016/03/28/pic-2015-03-28/"  title="pic-2015-03-28">
+<a href="/2016/03/31/Linux_2/"  title="Linux内核分析作业2：一个简单的时间片轮转多道程序内核代码">
  <strong>NEXT:</strong><br/> 
- <span>pic-2015-03-28
+ <span>Linux内核分析作业2：一个简单的时间片轮转多道程序内核代码
 </span>
 </a>
 </div>
@@ -240,7 +240,7 @@ current-&gt;ptrace &amp;= ~PT_DTRACE;
 		
 			<li><a href="/categories/linux内核分析/" title="linux内核分析">linux内核分析<sup>9</sup></a></li>
 		
-			<li><a href="/categories/手绘/" title="手绘">手绘<sup>4</sup></a></li>
+			<li><a href="/categories/手绘/" title="手绘">手绘<sup>5</sup></a></li>
 		
 		</ul>
 </div>
@@ -253,15 +253,11 @@ current-&gt;ptrace &amp;= ~PT_DTRACE;
 		
 			<li><a href="/tags/linux/" title="linux">linux<sup>9</sup></a></li>
 		
-			<li><a href="/tags/linux-linux内核/" title="linux linux内核">linux linux内核<sup>0</sup></a></li>
-		
-			<li><a href="/tags/linux-linux内核/" title="linux,linux内核">linux,linux内核<sup>0</sup></a></li>
-		
 			<li><a href="/tags/linux内核/" title="linux内核">linux内核<sup>3</sup></a></li>
 		
-			<li><a href="/tags/动漫/" title="动漫">动漫<sup>4</sup></a></li>
+			<li><a href="/tags/动漫/" title="动漫">动漫<sup>5</sup></a></li>
 		
-			<li><a href="/tags/手绘/" title="手绘">手绘<sup>4</sup></a></li>
+			<li><a href="/tags/手绘/" title="手绘">手绘<sup>5</sup></a></li>
 		
 			<li><a href="/tags/技术调研/" title="技术调研">技术调研<sup>1</sup></a></li>
 		

@@ -76,7 +76,7 @@ Section headers ： 每个section的header
 
 整体流程简介：
 
-![enter image description here](./linux7/flow.png)
+![enter image description here]zlinux7/flow.png)
 
 系统调用execvlp()系统调用首先会进入Sys_execve()
 
@@ -84,17 +84,17 @@ Section headers ： 每个section的header
 
 
 
-![enter image description here](./linux7/lab2.png)
+![enter image description here](/linux7/lab2.png)
 
-![enter image description here](./linux7/lab3.png)
+![enter image description here](/linux7/lab3.png)
 
 > do_common_execve() 从目标文件的头部(从第一个字节开始)读入若干(128)字节，然后调用另一个函数search_binary_handler()，在那里面让各种可执行程序的处理程序前来认领和处理。内核所支持的每种可执行程序都有个struct linux_binfmt数据结构，通过向内核登记挂入一个队列。而search_binary_handler()，则扫描这个队列，让各个数据结构所提供的处理程序、即各种映像格式、逐一前来认领。如果某个格式的处理程序发现特征相符而，便执行该格式映像的装入和启动。
 
 exec_binprm() -> search_binary_handler ()
 
-![enter image description here](./linux7/lab4.png)
+![enter image description here](/linux7/lab4.png)
 
-![enter image description here](./linux7/lab5.png)
+![enter image description here](/linux7/lab5.png)
 
 
 	#define load_elf_binary load_elf32_binary
@@ -126,7 +126,7 @@ exec_binprm() -> search_binary_handler ()
 
 最后调用 start_thread()
 
-![enter image description here](./linux7/lab8.png)
+![enter image description here](/linux7/lab8.png)
 
 
 	void start_thread(struct pt_regs *regs, unsigned long eip, unsigned long esp)
@@ -144,7 +144,7 @@ exec_binprm() -> search_binary_handler ()
 
 最后进行系统调用即可
 
-![enter image description here](./linux7/lab9.png)
+![enter image description here](/linux7/lab9.png)
 
 （不知道 为什么退出sys_execve()会进入core.c中的schedule函数，不应该是在syscall_exit中进行调用的吗？）
 
