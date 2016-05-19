@@ -85,3 +85,5 @@ deploy:
 
 stylus:
   compress: true
+
+disqus_shortname: easyforgood

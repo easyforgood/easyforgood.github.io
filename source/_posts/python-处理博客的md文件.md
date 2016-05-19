@@ -88,6 +88,13 @@ print tmp
 >>> L.next()
 2  
 ```
+最近做了一个hihocoder的题目，本来想用生成器推导式的，但是发现这个也是非常占内存的。
+其实 应该是 **range(long)特别占内存**
+list comprehension 相当于使用了两个list，如果range很大就会爆掉
+生成器推导式要好一点，只有一个range的空间，但是当时long int 大概有14位左右，range(10^14)用了一个gb的内存
+
+最后改成while语句了
+
 
 ### 推导式的原理
 
