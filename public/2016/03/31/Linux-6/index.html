@@ -1,0 +1,443 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Linux内核分析作业6：分析Linux内核创建一个新进程的过程 | Sip 的 solo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Sip Pi">
+    
+    <meta name="description" content="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000
+一、过程整理这里的过程大致上和第三次实验类似
+具体不同就是需要将test_fork.c 替换为 test.c即可。
+另外设置断点是现在 ru">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Sip 的 solo" title="Sip 的 solo"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Sip 的 solo">Sip 的 solo</a></h1>
+				<h2 class="blog-motto">不用说话，安静聆听</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/03/31/Linux-6/" title="Linux内核分析作业6：分析Linux内核创建一个新进程的过程" itemprop="url">Linux内核分析作业6：分析Linux内核创建一个新进程的过程</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="Sip Pi">Sip Pi</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-03-30T17:50:15.000Z" itemprop="datePublished">2016-03-31</time>
+    更新日期:<time datetime="2016-07-24T15:16:37.580Z" itemprop="dateModified">2016-07-24</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、过程整理"><span class="toc-number"></span> <span class="toc-text">一、过程整理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、关于task-struct-结构"><span class="toc-number"></span> <span class="toc-text">二、关于task_struct 结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、-创建一个新进程的过程"><span class="toc-number"></span> <span class="toc-text">三、 创建一个新进程的过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#四、-总结"><span class="toc-number"></span> <span class="toc-text">四、 总结</span></a>
+		</div>
+		
+		<h4 id="朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><a href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000" class="headerlink" title="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000"></a>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程<a href="http://mooc.study.163.com/course/USTC-1000029000" target="_blank" rel="external">http://mooc.study.163.com/course/USTC-1000029000</a></h4><hr>
+<h3 id="一、过程整理"><a href="#一、过程整理" class="headerlink" title="一、过程整理"></a>一、过程整理</h3><p>这里的过程大致上和<a href="https://easyforgood.github.io/Linux_3" target="_blank" rel="external">第三次实验</a>类似</p>
+<p>具体不同就是需要将test_fork.c 替换为 test.c即可。</p>
+<p>另外设置断点是现在 run_init_process 设置了一个。</p>
+<p>然后再设置do_fork那些。</p>
+<p>不然半个小时之后才能进入想要的。</p>
+<h3 id="二、关于task-struct-结构"><a href="#二、关于task-struct-结构" class="headerlink" title="二、关于task_struct 结构"></a>二、关于task_struct 结构</h3><p>找到了这篇博客还是挺好的。介绍的很详细和全面</p>
+<p><a href="http://blog.csdn.net/npy_lp/article/details/7292563" target="_blank" rel="external">Linux进程管理之task_struct结构体（上）</a></p>
+<p><a href="http://blog.csdn.net/npy_lp/article/details/7335187" target="_blank" rel="external">Linux进程管理之task_struct结构体（下）</a></p>
+<p>简单总结一下和 进程管理、内存管理、文件系统有关的主要部分:</p>
+<ol>
+<li><p>进程状态 </p>
+<pre><code>volatile long state;  
+int exit_state;
+</code></pre></li>
+</ol>
+<p>这张图很经典：</p>
+<p><img src="http://my.csdn.net/uploads/201204/14/1334337470_8447.jpg" alt="enter image description here"></p>
+<ol>
+<li><p>进程标识符</p>
+<pre><code>/*一般情况 32768 个进程*/
+pid_t pid;  
+/*线程组的领头线程 getpid()返回值*/
+pid_t tgid;  
+</code></pre></li>
+<li><p>进程调度 </p>
+<pre><code>/* prio用于保存动态优先级 static_prio静态优先级 normal_prio的值取决于静态优先级和调度策略*/
+int prio, static_prio, normal_prio; 
+/*实时优先级*/ 
+unsigned int rt_priority;  
+/*调度类*/
+const struct sched_class *sched_class;  
+？/*普通进程调用实体*/
+struct sched_entity se;
+？/*实时进程调用实体*/  
+struct sched_rt_entity rt;  
+/*调度策略*/
+unsigned int policy;  
+/*控制进程可以在哪里处理器上运行*/
+cpumask_t cpus_allowed;     
+</code></pre></li>
+<li><p>进程内核栈</p>
+<pre><code>/*指向下面的内核栈结构体的“栈底”*/
+void *stack;
+
+/*内核栈结构体*/
+union thread_union {  
+        struct thread_info thread_info;  
+        unsigned long stack[THREAD_SIZE/sizeof(long)];  //内核栈大小为THREAD_SIZE 一般为8K
+};  
+</code></pre><p> <img src="http://blog.chinaunix.net/attachment/201111/4/20543672_13203954065UzM.jpeg" alt="enter image description here"></p>
+</li>
+<li><p>进程地址空间 </p>
+<pre><code>/*mm指向进程所拥有的内存描述符。active_mm表示所使用的内存描述符*/
+struct mm_struct *mm, *active_mm;
+/*记录堆栈随机化的信息，为了安全引入的*/
+unsigned brk_randomized:1;
+/*进程缓存相关*/
+struct task_rss_stat    rss_stat;
+</code></pre></li>
+<li><p>文件</p>
+<pre><code>/* 和文件系统相关的信息*/  
+int link_count, total_link_count;  
+/* 进程当前和跟目录 */  
+struct fs_struct *fs;  
+/* 已打开文件表*/  
+struct files_struct *files;  
+</code></pre></li>
+</ol>
+<h3 id="三、-创建一个新进程的过程"><a href="#三、-创建一个新进程的过程" class="headerlink" title="三、 创建一个新进程的过程"></a>三、 创建一个新进程的过程</h3><p>整体流程：</p>
+<p><img src="/linux6/lab1.png" alt="enter image description here"></p>
+<p>解释我遇到的两个问题：</p>
+<p>第一个问题是 创建子进程之后是如何调度的？</p>
+<p>其实上述流程图所示。</p>
+<p>一般情况下。先运行父进程，在运行子进程。</p>
+<p>父进程在给子进程的thread_struct中的ip 赋了ret_from_fork后。</p>
+<p>他走完整个do_fork（）后，会回到系统调用syscall_exit退出。</p>
+<p>还记得系统调用最后会进行调度。</p>
+<p>调度到子进程。</p>
+<p>这时候子进程从ret_from_fork执行后，也会进入syscall_exit </p>
+<p>又重新进行了调度，把控制权交给了父进程。</p>
+<p>所以先进行父进程的输出</p>
+<p>（注：这只是我看代码的一种理解。我在猜想也有可能进程不进行调度）</p>
+<hr>
+<p>第二个问题: 内存是怎么分配的。</p>
+<p>这里涉及到了发现了两个知识点。</p>
+<p>一个是伙伴系统进行内存分配。一个是slab分配器。</p>
+<p>在dup_task_struct  中实现的。</p>
+<p>为task_struct 和 thread_info 开辟内存</p>
+<p>thread_info 就是之前有提过的内核栈。 具体情况见上图。</p>
+<p>tsk = alloc_task_struct_node(node); </p>
+<p>ti = alloc_thread_info_node(tsk, node);</p>
+<p>这里 由于两个 数据结构 较小，而且分配的时候内存长度不变。因此都是slab分配器分配的。</p>
+<p>主要是这两个地方要重新分配。</p>
+<p>其他的地方通过copy_MM()共享同一空间就可以了。</p>
+<hr>
+<p>最后说一下我对整个调用栈的理解。</p>
+<p>copy_process() 中的copy_thread() </p>
+<p>thread_struct 这个结构非常重要<br>，里面其实就是一个类似于pt_regs 这个数据结构，记录和处理器相关的寄存器的值。</p>
+<p>(注：我去查一下之前的内核版本信息。发现这个 task_strutct 中的thread_struct thread 这个属性在Linux2.4.16叫 thread_struct tss。 tss 啊！！百度一下你就知道是什么了 里面就是记录了任务状态！所以对应的ip就是之前用户空间的ip！)</p>
+<p>进程切换的时候。<br>linux会恢复cpu的内容，所以thread-&gt;ip自然就被恢复到eip寄存器中了</p>
+<p>同时 copy_thread 里面的ax也要赋值为0.这样才会通过返回值区分父子进程</p>
+<h3 id="四、-总结"><a href="#四、-总结" class="headerlink" title="四、 总结"></a>四、 总结</h3><p>仔细琢磨就会发现原来，fork的父子进程都是用同样的代码。</p>
+<hr>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/linux/">linux</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/linux内核分析/">linux内核分析</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2016/03/31/Linux-6/" data-title="Linux内核分析作业6：分析Linux内核创建一个新进程的过程 | Sip 的 solo" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/03/31/Linux/" title="Linux内核分析————总结">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Linux内核分析————总结</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/31/Linux-8/"  title="Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程">
+ <strong>NEXT:</strong><br/> 
+ <span>Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、过程整理"><span class="toc-number"></span> <span class="toc-text">一、过程整理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、关于task-struct-结构"><span class="toc-number"></span> <span class="toc-text">二、关于task_struct 结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、-创建一个新进程的过程"><span class="toc-number"></span> <span class="toc-text">三、 创建一个新进程的过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#四、-总结"><span class="toc-number"></span> <span class="toc-text">四、 总结</span></a>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/linux内核分析/" title="linux内核分析">linux内核分析<sup>9</sup></a></li>
+		
+			<li><a href="/categories/产品与未来/" title="产品与未来">产品与未来<sup>1</sup></a></li>
+		
+			<li><a href="/categories/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/linux/" title="linux">linux<sup>9</sup></a></li>
+		
+			<li><a href="/tags/linux内核/" title="linux内核">linux内核<sup>3</sup></a></li>
+		
+			<li><a href="/tags/动漫/" title="动漫">动漫<sup>6</sup></a></li>
+		
+			<li><a href="/tags/区块链/" title="区块链">区块链<sup>1</sup></a></li>
+		
+			<li><a href="/tags/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+			<li><a href="/tags/技术调研/" title="技术调研">技术调研<sup>1</sup></a></li>
+		
+			<li><a href="/tags/测试/" title="测试">测试<sup>1</sup></a></li>
+		
+			<li><a href="/tags/百度/" title="百度">百度<sup>1</sup></a></li>
+		
+			<li><a href="/tags/通信协议/" title="通信协议">通信协议<sup>1</sup></a></li>
+		
+			<li><a href="/tags/金融/" title="金融">金融<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="null" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="Sip Pi">Sip Pi</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>
