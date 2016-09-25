@@ -1,0 +1,615 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Linux内核分析作业2：一个简单的时间片轮转多道程序内核代码 | Sip 的 solo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Sip Pi">
+    
+    <meta name="description" content="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000
+github项目：Mykernel
+一、步骤整理请先在下载好linux-3.9.4.tar.xz 
+
+安装 qemu
+sudo apt-ge">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Sip 的 solo" title="Sip 的 solo"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Sip 的 solo">Sip 的 solo</a></h1>
+				<h2 class="blog-motto">不用说话，安静聆听</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/03/31/Linux_2/" title="Linux内核分析作业2：一个简单的时间片轮转多道程序内核代码" itemprop="url">Linux内核分析作业2：一个简单的时间片轮转多道程序内核代码</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="Sip Pi">Sip Pi</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-03-30T17:50:15.000Z" itemprop="datePublished">2016-03-31</time>
+    更新日期:<time datetime="2016-07-24T15:16:37.580Z" itemprop="dateModified">2016-07-24</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、步骤整理"><span class="toc-number"></span> <span class="toc-text">一、步骤整理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、内核代码执行过程"><span class="toc-number"></span> <span class="toc-text">二、内核代码执行过程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-mypcb-h"><span class="toc-number">1.</span> <span class="toc-text">1. mypcb.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-mymain-h"><span class="toc-number">2.</span> <span class="toc-text">2. mymain.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-myinterrupt-c"><span class="toc-number">3.</span> <span class="toc-text">3. myinterrupt.c</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、总结"><span class="toc-number"></span> <span class="toc-text">三、总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#四、补充"><span class="toc-number"></span> <span class="toc-text">四、补充</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1-和时钟中断有关"><span class="toc-number">0.1.</span> <span class="toc-text">1.和时钟中断有关</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-和mymain-c相关"><span class="toc-number">0.2.</span> <span class="toc-text">2.和mymain.c相关</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-其他细节"><span class="toc-number">0.3.</span> <span class="toc-text">3.其他细节</span></a></li></ol></li></ol>
+		</div>
+		
+		<h4 id="朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><a href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000" class="headerlink" title="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000"></a>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程<a href="http://mooc.study.163.com/course/USTC-1000029000" target="_blank" rel="external">http://mooc.study.163.com/course/USTC-1000029000</a></h4><hr>
+<p>github项目：<a href="https://github.com/mengning/mykernel" target="_blank" rel="external">Mykernel</a></p>
+<h3 id="一、步骤整理"><a href="#一、步骤整理" class="headerlink" title="一、步骤整理"></a>一、步骤整理</h3><p>请先在下载好<a href="https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.9.4.tar.xz" target="_blank" rel="external">linux-3.9.4.tar.xz</a> </p>
+<ol>
+<li><p>安装 qemu</p>
+<pre><code>sudo apt-get install qemu # install QEMU
+sudo ln -s /usr/bin/qemu-system-i386 /usr/bin/qemu
+</code></pre></li>
+<li><p>解压 linux</p>
+<pre><code>xz -d linux-3.9.4.tar.xz
+tar -xvf linux-3.9.4.tar
+</code></pre></li>
+<li><p>打内核补丁  <a href="https://github.com/mengning/mykernel/blob/master/mykernel_for_linux3.9.4sc.patch" target="_blank" rel="external">mykernel_for_linux3.9.4sc.patch</a></p>
+<pre><code>patch -p1 &lt; ../mykernel_for_linux3.9.4sc.patch
+</code></pre></li>
+<li>编译运行 </li>
+</ol>
+<pre><code>make allnoconfig
+make
+qemu -kernel arch/x86/boot/bzImage
+</code></pre><p>实验截图：</p>
+<p><img src="/linux2/lab2_1.png" alt="enter image description here"></p>
+<p><img src="/linux2/lab2_2.png" alt="enter image description here"></p>
+<p><img src="/linux2/lab2_3.png" alt="enter image description here"></p>
+<ol>
+<li>将 mypcb.h 、mymain.c、myinterrupt.c 放入mykernel 文件夹 并编译运行 </li>
+</ol>
+<p><img src="/linux2/lab2_4.png" alt="enter image description here"></p>
+<h3 id="二、内核代码执行过程"><a href="#二、内核代码执行过程" class="headerlink" title="二、内核代码执行过程"></a>二、内核代码执行过程</h3><p>核心代码主要由：mypcb.h 、mymain.c、myinterrupt.c三个文件构成</p>
+<h4 id="1-mypcb-h"><a href="#1-mypcb-h" class="headerlink" title="1. mypcb.h"></a>1. mypcb.h</h4><pre><code>#define MAX_TASK_NUM        4
+#define KERNEL_STACK_SIZE   1024*8
+
+/* CPU-specific state of this task */
+struct Thread {
+    unsigned long        ip;
+    unsigned long        sp;
+};
+
+typedef struct PCB{
+    int pid;
+    volatile long state;    /* -1 unrunnable, 0 runnable, &gt;0 stopped */
+    char stack[KERNEL_STACK_SIZE];
+    /* CPU-specific state of this task */
+    struct Thread thread;
+    unsigned long    task_entry;
+    struct PCB *next;
+}tPCB;
+
+void my_schedule(void);
+</code></pre><p>这里主要是定义了进程控制块的参数。</p>
+<p>参数主要包括了：</p>
+<blockquote>
+<ul>
+<li>pid 进程标识符</li>
+<li>state 进程运行状态</li>
+<li>thread 进程寄存器的信息 包括了 堆栈sp指针和当前进程指令ip</li>
+<li>task_entry 进程运行代码的入口</li>
+<li>下一个进程控制块（进程控制块是以链表的方式组织的）</li>
+</ul>
+</blockquote>
+<h4 id="2-mymain-h"><a href="#2-mymain-h" class="headerlink" title="2. mymain.h"></a>2. mymain.h</h4><p>先说下my_process()<br>这个函数是进程调度时会运行的代码</p>
+<pre><code>    void my_process(void)
+{
+    int i = 0;
+    while(1)
+    {
+        i++;
+        if(i%10000000 == 0)
+        {
+            printk(KERN_NOTICE &quot;this is process %d -\n&quot;,my_current_task-&gt;pid);
+            if(my_need_sched == 1)
+            {
+                my_need_sched = 0;
+                my_schedule();
+            }
+            printk(KERN_NOTICE &quot;this is process %d +\n&quot;,my_current_task-&gt;pid);
+        }     
+    }
+</code></pre><p>逻辑很简单，就是进程执行循环执行某个人物，当执行到i%10000000=0时，会进行调度。</p>
+<p>如果my_need_sched =1 会进行主动调度，执行调度函数 my_schedule()</p>
+<p>而这个 my_need_sched=1 是每次时钟中断发生时会改变一次，我们后面会看到</p>
+<p>接着分析，my_main.c中主要的</p>
+<pre><code>void __init my_start_kernel(void)
+{
+    int pid = 0;
+    int i;
+    /* Initialize process 0*/
+    task[pid].pid = pid;
+    task[pid].state = 0;/* -1 unrunnable, 0 runnable, &gt;0 stopped */
+    task[pid].task_entry = task[pid].thread.ip = (unsigned long)my_process;
+    task[pid].thread.sp = (unsigned long)&amp;task[pid].stack[KERNEL_STACK_SIZE-1];
+    task[pid].next = &amp;task[pid];
+    /*fork more process */
+    for(i=1;i&lt;MAX_TASK_NUM;i++)
+    {
+        memcpy(&amp;task[i],&amp;task[0],sizeof(tPCB));
+        task[i].pid = i;
+        task[i].state = -1;
+        task[i].thread.sp = (unsigned long)&amp;task[i].stack[KERNEL_STACK_SIZE-1];
+        task[i].next = task[i-1].next;
+        task[i-1].next = &amp;task[i];
+    }
+/* start process 0 by task[0] */
+    /* start process 0 by task[0] */
+    pid = 0;
+    my_current_task = &amp;task[pid];
+    asm volatile(
+        &quot;movl %1,%%esp\n\t&quot;     /* set task[pid].thread.sp to esp */
+        &quot;pushl %1\n\t&quot;             /* push ebp */
+        &quot;pushl %0\n\t&quot;             /* push task[pid].thread.ip */
+        &quot;ret\n\t&quot;                 /* pop task[pid].thread.ip to eip */
+        &quot;popl %%ebp\n\t&quot;
+        : 
+        : &quot;c&quot; (task[pid].thread.ip),&quot;d&quot; (task[pid].thread.sp)    /* input c or d mean %ecx/%edx*/
+    );
+}   
+</code></pre><p>前半部分比较简单。是初始化进程控制块，把他们连接在一起（这是一个循环链表），然后将当前进程my_current_task=task[0];</p>
+<p>之后的操作就该是执行该控制块了。有这段汇编实现（<strong>重点</strong>）</p>
+<pre><code>asm volatile(
+            &quot;movl %1,%%esp\n\t&quot;     /* set task[pid].thread.sp to esp */
+            &quot;pushl %1\n\t&quot;             /* push ebp */
+            &quot;pushl %0\n\t&quot;             /* push task[pid].thread.ip */
+            &quot;ret\n\t&quot;                 /* pop task[pid].thread.ip to eip */
+            &quot;popl %%ebp\n\t&quot;
+            : 
+            : &quot;c&quot; (task[pid].thread.ip),&quot;d&quot; (task[pid].thread.sp)    /* input c or d mean %ecx/%edx*/
+        );
+</code></pre><p>这里应该是进行三步：</p>
+<ol>
+<li>切换esp</li>
+<li>保存上一个堆栈框架的ebp并且将ebp=esp（相当于entry <strong>这里没有ebp=esp 不够严谨</strong>）</li>
+<li>跳转到task[0]的执行流里（实现方式是先push到esp中，然后ret，当esp指向的元素pop到eip中）</li>
+</ol>
+<p>这样一个进程就开始执行了。</p>
+<h4 id="3-myinterrupt-c"><a href="#3-myinterrupt-c" class="headerlink" title="3. myinterrupt.c"></a>3. myinterrupt.c</h4><p>这里是时钟中断发生的处理函数：</p>
+<pre><code>    void my_timer_handler(void)
+{
+#if 1
+    if(time_count%1000 == 0 &amp;&amp; my_need_sched != 1)
+    {
+        printk(KERN_NOTICE &quot;&gt;&gt;&gt;my_timer_handler here&lt;&lt;&lt;\n&quot;);
+        my_need_sched = 1;
+    } 
+    time_count ++ ;  
+#endif
+    return;      
+}
+</code></pre><p>主要的就是会修改 my_need_sched 这个值触发调度</p>
+<p>my_schedule(void) 调度函数</p>
+<pre><code>tPCB * next;
+tPCB * prev;
+
+if(my_current_task == NULL 
+    || my_current_task-&gt;next == NULL)
+{
+    return;
+}
+printk(KERN_NOTICE &quot;&gt;&gt;&gt;my_schedule&lt;&lt;&lt;\n&quot;);
+/* schedule */
+next = my_current_task-&gt;next;
+prev = my_current_task;
+</code></pre><p>这一端代码的意思是</p>
+<p>next 为下一个进程</p>
+<p>prev 为当前进程</p>
+<pre><code>if(next-&gt;state == 0)/* -1 unrunnable, 0 runnable, &gt;0 stopped */
+    {
+        /* switch to next process */
+        asm volatile(    
+            &quot;pushl %%ebp\n\t&quot;         /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */    
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;                 /* restore  eip */
+            &quot;1:\t&quot;                  /* next process start here */
+            &quot;popl %%ebp\n\t&quot;
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+        ); 
+        my_current_task = next; 
+        printk(KERN_NOTICE &quot;&gt;&gt;&gt;switch %d to %d&lt;&lt;&lt;\n&quot;,prev-&gt;pid,next-&gt;pid);       
+    }
+    else
+    {
+        next-&gt;state = 0;
+        my_current_task = next;
+        printk(KERN_NOTICE &quot;&gt;&gt;&gt;switch %d to %d&lt;&lt;&lt;\n&quot;,prev-&gt;pid,next-&gt;pid);
+        /* switch to new process */
+        asm volatile(    
+            &quot;pushl %%ebp\n\t&quot;         /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl %2,%%ebp\n\t&quot;     /* restore  ebp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */    
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;                 /* restore  eip */
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+        );          
+    }   
+</code></pre><p>next-&gt;state 代表运行状态  =0 代表已经运行  =-1 代表 还没有运行</p>
+<p>当next进程还没有运行时 进程切换的代码是这样的：</p>
+<pre><code>asm volatile(    
+            &quot;pushl %%ebp\n\t&quot;         /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl %2,%%ebp\n\t&quot;     /* restore  ebp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */    
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;                 /* restore  eip */
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+</code></pre><p>步骤如下</p>
+<p>首先要保存现场： </p>
+<ol>
+<li>保存ebp到当前进程的esp中 pushl %%ebp\n\t</li>
+<li>保存当前esp的内容到 当前进程 movl %%esp,%0</li>
+<li>保存eip movl $1f,%1 这里的$1f是下次运行时第一条指令的位置，代表为f （forward）向前方向上 1 标号 所指指令的地址。</li>
+</ol>
+<p>还有切换到当前进程的现场：</p>
+<ol>
+<li>恢复esp。movl %2,%%esp</li>
+<li>恢复ebp。movl %2,%%ebp  （<strong>刚开始运行 ebp=esp</strong>）</li>
+</ol>
+<p>最后跳转到next进程的执行流中:<br>和之前一样</p>
+<pre><code>pushl %3
+ret   
+</code></pre><p>然后 ret的值就是my_process()这个函数的起始位置。开始执行该函数。</p>
+<p>然后 这样运行第一圈之后，又会回到task[0] 此时task[0]已经运行了。所以会执行一下汇编进行进程切换。</p>
+<pre><code>asm volatile(    
+            &quot;pushl %%ebp\n\t&quot;         /* save ebp */
+            &quot;movl %%esp,%0\n\t&quot;     /* save esp */
+            &quot;movl %2,%%esp\n\t&quot;     /* restore  esp */
+            &quot;movl $1f,%1\n\t&quot;       /* save eip */    
+            &quot;pushl %3\n\t&quot; 
+            &quot;ret\n\t&quot;                 /* restore  eip */
+            &quot;1:\t&quot;                  /* next process start here */
+            &quot;popl %%ebp\n\t&quot;
+            : &quot;=m&quot; (prev-&gt;thread.sp),&quot;=m&quot; (prev-&gt;thread.ip)
+            : &quot;m&quot; (next-&gt;thread.sp),&quot;m&quot; (next-&gt;thread.ip)
+        ); 
+</code></pre><p>保存现场和恢复现场的部分是和之前一样的。<br>除了恢复现场没有恢复ebp</p>
+<p>关键是还记得上一次我们保存 当前进程的eip的时候，保存的值是$1f嘛？<br>所以 </p>
+<pre><code>pushl %3
+ret     
+</code></pre><p>要进入下一个进程的执行流时，此时的eip 为 1 标号所对应的指令</p>
+<pre><code>1：popl %%ebp
+</code></pre><p>这样过程就完整了，恢复现场的工作完成了，ebp指向了正确的值。</p>
+<h3 id="三、总结"><a href="#三、总结" class="headerlink" title="三、总结"></a>三、总结</h3><p>其实，整个过程最重要的就是理解函数调用栈的框架。</p>
+<p>这个框架大概是这样的</p>
+<p><img src="/linux2/end.png" alt="enter image description here"></p>
+<p>保持这个框架的完整性即可</p>
+<h3 id="四、补充"><a href="#四、补充" class="headerlink" title="四、补充"></a>四、补充</h3><ul>
+<li>volatile 限定符 会把变量放在register中  执行流取的时候 要放到寄存器 放到内存容易出现问题</li>
+<li>如何 制作整个 mykernel 项目的</li>
+</ul>
+<p>mykernel 的制作涉及到了两个问题：</p>
+<ol>
+<li>如何设置时钟中断</li>
+<li>如何把控制权交给 mymain.c 中的  my_start_kernel</li>
+</ol>
+<p>其实两个问题都可以从  <a href="https://github.com/mengning/mykernel/blob/master/mykernel_for_linux3.9.4sc.patch" target="_blank" rel="external">mykernel_for_linux3.9.4sc.patch</a><br>中找到答案</p>
+<p>因为文件比较大 我就不贴出来了。。</p>
+<p>直接标记大概修改了那些地方：</p>
+<h5 id="1-和时钟中断有关"><a href="#1-和时钟中断有关" class="headerlink" title="1.和时钟中断有关"></a>1.和时钟中断有关</h5><blockquote>
+<ul>
+<li>/arch/x86/kernel/time.c 中的 timer_interrupt（） (时钟中断处理函数 会调用my_timer_handler();)</li>
+</ul>
+</blockquote>
+<h5 id="2-和mymain-c相关"><a href="#2-和mymain-c相关" class="headerlink" title="2.和mymain.c相关"></a>2.和mymain.c相关</h5><blockquote>
+<ul>
+<li>/init/main.c 中的 start_kernel()</li>
+</ul>
+</blockquote>
+<h5 id="3-其他细节"><a href="#3-其他细节" class="headerlink" title="3.其他细节"></a>3.其他细节</h5><blockquote>
+<ul>
+<li>extern 需要的函数 如：在/arch/x86/kernel/time.c  extern void my_timer_handler(void);</li>
+<li>编写需要的makefile 主要是 /mykernel/Makefile </li>
+<li>同时还需要修改下根目录下的 总Makefile</li>
+<li>还有README  (^_^)Y</li>
+</ul>
+</blockquote>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/linux/">linux</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/linux内核分析/">linux内核分析</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2016/03/31/Linux_2/" data-title="Linux内核分析作业2：一个简单的时间片轮转多道程序内核代码 | Sip 的 solo" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/04/01/python-处理博客的md文件/" title="python 处理博客的md文件">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  python 处理博客的md文件</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/31/Linux_3/"  title="Linux内核分析作业3：跟踪分析Linux内核的启动过程">
+ <strong>NEXT:</strong><br/> 
+ <span>Linux内核分析作业3：跟踪分析Linux内核的启动过程
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、步骤整理"><span class="toc-number"></span> <span class="toc-text">一、步骤整理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、内核代码执行过程"><span class="toc-number"></span> <span class="toc-text">二、内核代码执行过程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-mypcb-h"><span class="toc-number">1.</span> <span class="toc-text">1. mypcb.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-mymain-h"><span class="toc-number">2.</span> <span class="toc-text">2. mymain.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-myinterrupt-c"><span class="toc-number">3.</span> <span class="toc-text">3. myinterrupt.c</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、总结"><span class="toc-number"></span> <span class="toc-text">三、总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#四、补充"><span class="toc-number"></span> <span class="toc-text">四、补充</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1-和时钟中断有关"><span class="toc-number">0.1.</span> <span class="toc-text">1.和时钟中断有关</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-和mymain-c相关"><span class="toc-number">0.2.</span> <span class="toc-text">2.和mymain.c相关</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-其他细节"><span class="toc-number">0.3.</span> <span class="toc-text">3.其他细节</span></a></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/linux内核分析/" title="linux内核分析">linux内核分析<sup>9</sup></a></li>
+		
+			<li><a href="/categories/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/linux/" title="linux">linux<sup>9</sup></a></li>
+		
+			<li><a href="/tags/linux内核/" title="linux内核">linux内核<sup>3</sup></a></li>
+		
+			<li><a href="/tags/动漫/" title="动漫">动漫<sup>6</sup></a></li>
+		
+			<li><a href="/tags/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+			<li><a href="/tags/技术调研/" title="技术调研">技术调研<sup>1</sup></a></li>
+		
+			<li><a href="/tags/测试/" title="测试">测试<sup>1</sup></a></li>
+		
+			<li><a href="/tags/通信协议/" title="通信协议">通信协议<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="null" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="Sip Pi">Sip Pi</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>

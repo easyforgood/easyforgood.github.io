@@ -1,0 +1,400 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程 | Sip 的 solo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Sip Pi">
+    
+    <meta name="description" content="一、进程调度的基本知识1. linux进程调度的时机调度时机只是判断是否调度但是不一定真的调度
+
+进程状态转换的时刻：进程终止、进程睡眠  例如 调用sleep() wait()  调用sh
+当前进程的时间片用完时  和中断返回一样
+设备驱动程序 设备驱动程序执行长而重复的任务时，直接调用调度程序
+">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Sip 的 solo" title="Sip 的 solo"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Sip 的 solo">Sip 的 solo</a></h1>
+				<h2 class="blog-motto">不用说话，安静聆听</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/03/31/Linux-8/" title="Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程" itemprop="url">Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="Sip Pi">Sip Pi</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-03-30T17:50:15.000Z" itemprop="datePublished">2016-03-31</time>
+    更新日期:<time datetime="2016-07-24T15:16:37.580Z" itemprop="dateModified">2016-07-24</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#一、进程调度的基本知识"><span class="toc-number">1.</span> <span class="toc-text">一、进程调度的基本知识</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-linux进程调度的时机"><span class="toc-number">1.1.</span> <span class="toc-text">1. linux进程调度的时机</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-时钟中断进程切换的简易流程-感觉其他的切换只是这个的一部分"><span class="toc-number">1.2.</span> <span class="toc-text">2. 时钟中断进程切换的简易流程(感觉其他的切换只是这个的一部分)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、进程切换过程跟踪-没啥内容"><span class="toc-number">2.</span> <span class="toc-text">二、进程切换过程跟踪 (没啥内容)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、switch-to-进程切换简要分析"><span class="toc-number">3.</span> <span class="toc-text">三、switch_to 进程切换简要分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#四、总结"><span class="toc-number">4.</span> <span class="toc-text">四、总结</span></a></li></ol>
+		</div>
+		
+		<h3 id="一、进程调度的基本知识"><a href="#一、进程调度的基本知识" class="headerlink" title="一、进程调度的基本知识"></a>一、进程调度的基本知识</h3><h4 id="1-linux进程调度的时机"><a href="#1-linux进程调度的时机" class="headerlink" title="1. linux进程调度的时机"></a>1. linux进程调度的时机</h4><p><strong>调度时机只是判断是否调度但是不一定真的调度</strong></p>
+<ul>
+<li>进程状态转换的时刻：进程终止、进程睡眠  例如 调用sleep() wait()  调用sh</li>
+<li>当前进程的时间片用完时  和中断返回一样</li>
+<li>设备驱动程序 设备驱动程序执行长而重复的任务时，直接调用调度程序</li>
+<li>进程从中断、异常及系统调用返回到用户态时 都会回到 ret_from_sys_call 对need_resched判断是否需要调度</li>
+</ul>
+<p>老师的站在另外一个角度：</p>
+<ul>
+<li>中断处理过程返回会调用 </li>
+<li>内核线程可以直接调用schedule()进行进程切换</li>
+<li>用户态进程无法直接调用。只能在进入内核态后才有机会。</li>
+</ul>
+<h4 id="2-时钟中断进程切换的简易流程-感觉其他的切换只是这个的一部分"><a href="#2-时钟中断进程切换的简易流程-感觉其他的切换只是这个的一部分" class="headerlink" title="2. 时钟中断进程切换的简易流程(感觉其他的切换只是这个的一部分)"></a>2. 时钟中断进程切换的简易流程(感觉其他的切换只是这个的一部分)</h4><p><strong>schedule（）</strong>：主要函数进程调度函数完成进程的选择和上下文切换<br><strong>do_timer（）</strong>：时钟函数<br>参考书上一段资料：</p>
+<blockquote>
+<p>在CFS(unix引入的公平调度器)中，tick中断（do_timer()）首先更新调度信息。然后调整当前进程在红黑树中的位置。调整完成后如果发现当前进程不再是最左边的叶子(左边代表优先级最高)，就标记need_resched标志</p>
+</blockquote>
+<p><strong>ret_from_sys_call（）</strong>：当一个系统调用或中断完成时，该函数被调用，用于处理一些收尾工作。</p>
+<p>do_timer() 修改进程信息、置标志位 ——–&gt; ret_from_sys_call 判断标志位 ——–&gt; call SYMBOL_NAME(schedule) 调用  schedule（）完成切换</p>
+<h3 id="二、进程切换过程跟踪-没啥内容"><a href="#二、进程切换过程跟踪-没啥内容" class="headerlink" title="二、进程切换过程跟踪 (没啥内容)"></a>二、进程切换过程跟踪 (没啥内容)</h3><p>切换主要流程：<br><img src="/1430066325270.png" alt="Alt text"></p>
+<p>先进入schedule()<br><img src="/1430066602474.png" alt="Alt text"></p>
+<p>通过 pick_next_task 找到下一个切换的进程</p>
+<p><img src="/1430066690011.png" alt="Alt text"></p>
+<p>进入context_switch进行进程上下文切换</p>
+<p><img src="/1430066761279.png" alt="Alt text"></p>
+<p>这里跟踪到了 __switch_to但是没有找到switch_to</p>
+<p>switch_to 主要是esp和eip切换<br>__switch_to 网上找的的说法是<br>切换浮点部件寄存器和状态 fpu<br>重设TSS的esp0<br>设置current_task 这个还是很重要的。<br><img src="/1430067352414.png" alt="Alt text"></p>
+<p>另外一个小细节</p>
+<p>由于调用__switch_to时不是通过call指令，而是jmp</p>
+<p>然后 __switch_to也会return 这是就会执行标号1的内容了</p>
+<h3 id="三、switch-to-进程切换简要分析"><a href="#三、switch-to-进程切换简要分析" class="headerlink" title="三、switch_to 进程切换简要分析"></a>三、switch_to 进程切换简要分析</h3><p>在内核态，进程切换主要分两步：</p>
+<p>1：切换页全局目录</p>
+<p>2：切换堆栈和硬件上下文 switch_to 实现</p>
+<p>switch_to:</p>
+<ul>
+<li>把eflags和ebp寄存器保存到prev内核栈中。</li>
+<li>esp保存到prev-&gt;thread.sp 就是保存在进程状态描述符tss中。 把$1f保存到prev-&gt;thread.ip</li>
+<li>恢复next进程的堆栈  把next指向的新进程的thread.esp保存到esp中，把next-&gt;thread.ip保存到eip中</li>
+</ul>
+<p>__switch_to:</p>
+<p>切换内核堆栈之后，TSS段也要相应的改变</p>
+<blockquote>
+<p>这是因为对于linux系统来说同一个CPU上所有的进程共用一个TSS，进程切换了，因此TSS需要随之改变。</p>
+<p>linux系统中主要从两个方面用到了TSS：</p>
+<p>(1)任何进程从用户态陷入内核态都必须从TSS获得内核堆栈指针</p>
+<p>(2)用户态读写IO需要访问TSS的权限位图。</p>
+</blockquote>
+<h3 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h3><p>马上要考试了。各位加油</p>
+<p>参考文献：</p>
+<ul>
+<li><p>linux kernel development  一书 Robert.Lover</p>
+</li>
+<li><p><a href="http://oss.org.cn/kernel-book/" target="_blank" rel="external">深入分析Linux内核源码</a></p>
+</li>
+</ul>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/linux/">linux</a><a href="/tags/linux内核/">linux内核</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/linux内核分析/">linux内核分析</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2016/03/31/Linux-8/" data-title="Linux内核分析作业8：理解进程调度时机跟踪分析进程调度与进程切换的过程 | Sip 的 solo" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/03/31/Linux-6/" title="Linux内核分析作业6：分析Linux内核创建一个新进程的过程">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Linux内核分析作业6：分析Linux内核创建一个新进程的过程</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/31/通信协议的调研/"  title="关于通信协议的mark">
+ <strong>NEXT:</strong><br/> 
+ <span>关于通信协议的mark
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#一、进程调度的基本知识"><span class="toc-number">1.</span> <span class="toc-text">一、进程调度的基本知识</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-linux进程调度的时机"><span class="toc-number">1.1.</span> <span class="toc-text">1. linux进程调度的时机</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-时钟中断进程切换的简易流程-感觉其他的切换只是这个的一部分"><span class="toc-number">1.2.</span> <span class="toc-text">2. 时钟中断进程切换的简易流程(感觉其他的切换只是这个的一部分)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、进程切换过程跟踪-没啥内容"><span class="toc-number">2.</span> <span class="toc-text">二、进程切换过程跟踪 (没啥内容)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、switch-to-进程切换简要分析"><span class="toc-number">3.</span> <span class="toc-text">三、switch_to 进程切换简要分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#四、总结"><span class="toc-number">4.</span> <span class="toc-text">四、总结</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/linux内核分析/" title="linux内核分析">linux内核分析<sup>9</sup></a></li>
+		
+			<li><a href="/categories/产品与未来/" title="产品与未来">产品与未来<sup>2</sup></a></li>
+		
+			<li><a href="/categories/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/linux/" title="linux">linux<sup>9</sup></a></li>
+		
+			<li><a href="/tags/linux内核/" title="linux内核">linux内核<sup>3</sup></a></li>
+		
+			<li><a href="/tags/产品体验/" title="产品体验">产品体验<sup>1</sup></a></li>
+		
+			<li><a href="/tags/动漫/" title="动漫">动漫<sup>6</sup></a></li>
+		
+			<li><a href="/tags/区块链/" title="区块链">区块链<sup>1</sup></a></li>
+		
+			<li><a href="/tags/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+			<li><a href="/tags/技术调研/" title="技术调研">技术调研<sup>1</sup></a></li>
+		
+			<li><a href="/tags/智能硬件/" title="智能硬件">智能硬件<sup>1</sup></a></li>
+		
+			<li><a href="/tags/测试/" title="测试">测试<sup>1</sup></a></li>
+		
+			<li><a href="/tags/百度/" title="百度">百度<sup>1</sup></a></li>
+		
+			<li><a href="/tags/通信协议/" title="通信协议">通信协议<sup>1</sup></a></li>
+		
+			<li><a href="/tags/金融/" title="金融">金融<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="null" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="Sip Pi">Sip Pi</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>

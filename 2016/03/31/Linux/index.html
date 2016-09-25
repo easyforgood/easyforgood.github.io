@@ -1,0 +1,375 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Linux内核分析————总结 | Sip 的 solo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Sip Pi">
+    
+    <meta name="description" content="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000
+一、Linux 内核分析文章列表1、 X86体系下计算机是如何运行程序
+ 主要内容是计算机是如何工作的
+涉及到了冯诺依曼存储计算机的体系结构">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Sip 的 solo" title="Sip 的 solo"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Sip 的 solo">Sip 的 solo</a></h1>
+				<h2 class="blog-motto">不用说话，安静聆听</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/03/31/Linux/" title="Linux内核分析————总结" itemprop="url">Linux内核分析————总结</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="Sip Pi">Sip Pi</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-03-30T17:50:15.000Z" itemprop="datePublished">2016-03-31</time>
+    更新日期:<time datetime="2016-07-24T15:16:37.576Z" itemprop="dateModified">2016-07-24</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、Linux-内核分析文章列表"><span class="toc-number"></span> <span class="toc-text">一、Linux 内核分析文章列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、总结"><span class="toc-number"></span> <span class="toc-text">二、总结</span></a>
+		</div>
+		
+		<h4 id="朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><a href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000" class="headerlink" title="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000"></a>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程<a href="http://mooc.study.163.com/course/USTC-1000029000" target="_blank" rel="external">http://mooc.study.163.com/course/USTC-1000029000</a></h4><hr>
+<h3 id="一、Linux-内核分析文章列表"><a href="#一、Linux-内核分析文章列表" class="headerlink" title="一、Linux 内核分析文章列表"></a>一、Linux 内核分析文章列表</h3><p>1、<a href="http://www.siplexy.me/Linux_1.html" target="_blank" rel="external"> X86体系下计算机是如何运行程序</a></p>
+<p> 主要内容是<strong>计算机是如何工作的</strong></p>
+<p>涉及到了<strong>冯诺依曼存储计算机</strong>的体系结构 、一些汇编指令的堆栈变化。</p>
+<p>2、 <a href="http://www.siplexy.me/Linux_2.html" target="_blank" rel="external">一个简单的时间片轮转多道程序内核代码</a></p>
+<p>主要内容是<strong>操作系统的运行原理</strong></p>
+<p>涉及到了 <strong>函数调用栈</strong>的结构以及操作系统是如何利用这个结构进行<strong>进程上下文</strong>切换的</p>
+<p>3、 <a href="http://www.siplexy.me/Linux_3.html" target="_blank" rel="external">跟踪分析Linux内核的启动过程</a></p>
+<p>主要内容是<strong>操作系统启动过程</strong></p>
+<p>宏观的分析了操作系统的启动流程，从<strong>start_kernel()</strong> 主要是<strong>rest_init()</strong> 完成了第一个用户进程的创建</p>
+<p>4、5、<a href="http://www.siplexy.me/Linux_45.html" target="_blank" rel="external">系统调用的使用和过程详解</a></p>
+<p>主要内容是 <strong>用户态和内核态的接口—系统调用的概念以及原理</strong></p>
+<p>涉及到了 <strong>中断上下文切换</strong> 以及<strong>系统调用的三层皮</strong></p>
+<p>6、<a href="http://www.siplexy.me/Linux_6.html" target="_blank" rel="external">分析Linux内核创建一个新进程的过程</a></p>
+<p>主要内容是 <strong>进程简析</strong></p>
+<p>涉及到了 进程控制块（<strong>task_struct</strong>）的结构以及是如何通过<strong>do_fork()</strong>创建一个进程的</p>
+<p>7、 <a href="http://www.siplexy.me/Linux_7.html" target="_blank" rel="external">Linux内核如何装载和启动一个可执行程序</a></p>
+<p>主要内容是<strong>程序的装载和启动</strong></p>
+<p>与上次的内容紧密相连，程序在创建完进程之后如何调用自己的执行路径而完全的脱离父进程。</p>
+<p>涉及到了<strong>程序是如何构建的</strong>、<strong>程序执行的执行环境</strong>以及<strong>execuve的具体方法</strong></p>
+<p>8、 <a href="http://www.siplexy.me/Linux_8.html" target="_blank" rel="external">理解进程调度时机跟踪分析进程调度与进程切换的过程</a></p>
+<p>主要内容是 <strong>进程切换</strong></p>
+<p>涉及到了 <strong>进程上下文切换</strong> 以及 <strong>进程的一般执行过程</strong></p>
+<h3 id="二、总结"><a href="#二、总结" class="headerlink" title="二、总结"></a>二、总结</h3><p>这门课首先学习了操作系统在运行程序过程中的一些基本原理（函数调用栈以及中断上下文的切换这些）</p>
+<p>然后主要介绍了 操作系统系统调用的实现，以及进程的创建，加载和调度。</p>
+<p>带我们从这些角度了解Linux 建立起了一个宏观概念</p>
+<p>我个人特别喜欢Linux内核在进程调度的一个感觉。</p>
+<p>就是通过 函数调用栈的结构特性。不断利用重复的代码 利用结构不变性和参数的逻辑上不变性</p>
+<p>构造出了 类似庄生梦蝶的效果   我觉得 这种循环的异常美妙的。</p>
+<p>但是 Linux 操作系统的内容远不止这些。内存寻址内存分配回收   文件系统对文件资源的管理  等等等</p>
+<p>还有很多 东西需要我们去学习 。。</p>
+<p>感谢孟宁老师。给我们 带来了一场非常棒的内核体验！</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/linux/">linux</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/linux内核分析/">linux内核分析</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2016/03/31/Linux/" data-title="Linux内核分析————总结 | Sip 的 solo" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/03/31/junit5的相关说明/" title="junit5的相关说明">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  junit5的相关说明</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/31/Linux-1/"  title="Linux内核分析1：X86体系下计算机是如何运行程序">
+ <strong>NEXT:</strong><br/> 
+ <span>Linux内核分析1：X86体系下计算机是如何运行程序
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、Linux-内核分析文章列表"><span class="toc-number"></span> <span class="toc-text">一、Linux 内核分析文章列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、总结"><span class="toc-number"></span> <span class="toc-text">二、总结</span></a>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/linux内核分析/" title="linux内核分析">linux内核分析<sup>9</sup></a></li>
+		
+			<li><a href="/categories/产品与未来/" title="产品与未来">产品与未来<sup>2</sup></a></li>
+		
+			<li><a href="/categories/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/linux/" title="linux">linux<sup>9</sup></a></li>
+		
+			<li><a href="/tags/linux内核/" title="linux内核">linux内核<sup>3</sup></a></li>
+		
+			<li><a href="/tags/产品体验/" title="产品体验">产品体验<sup>1</sup></a></li>
+		
+			<li><a href="/tags/动漫/" title="动漫">动漫<sup>6</sup></a></li>
+		
+			<li><a href="/tags/区块链/" title="区块链">区块链<sup>1</sup></a></li>
+		
+			<li><a href="/tags/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+			<li><a href="/tags/技术调研/" title="技术调研">技术调研<sup>1</sup></a></li>
+		
+			<li><a href="/tags/智能硬件/" title="智能硬件">智能硬件<sup>1</sup></a></li>
+		
+			<li><a href="/tags/测试/" title="测试">测试<sup>1</sup></a></li>
+		
+			<li><a href="/tags/百度/" title="百度">百度<sup>1</sup></a></li>
+		
+			<li><a href="/tags/通信协议/" title="通信协议">通信协议<sup>1</sup></a></li>
+		
+			<li><a href="/tags/金融/" title="金融">金融<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="null" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="Sip Pi">Sip Pi</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>

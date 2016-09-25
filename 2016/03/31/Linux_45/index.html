@@ -1,0 +1,478 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Linux内核分析4：两种方式使用同一个系统调用 | Sip 的 solo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Sip Pi">
+    
+    <meta name="description" content="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000注：因为这次作业和上次作业写重复了。所以我就补充说明一下。全部写在前面了。
+
+API实现的系统调用流程图：
+
+
+具体的系统调用处理过程：
+
+
+">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Sip 的 solo" title="Sip 的 solo"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Sip 的 solo">Sip 的 solo</a></h1>
+				<h2 class="blog-motto">不用说话，安静聆听</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/03/31/Linux_45/" title="Linux内核分析4：两种方式使用同一个系统调用" itemprop="url">Linux内核分析4：两种方式使用同一个系统调用</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="Sip Pi">Sip Pi</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-03-30T17:50:15.000Z" itemprop="datePublished">2016-03-31</time>
+    更新日期:<time datetime="2016-07-24T15:16:37.580Z" itemprop="dateModified">2016-07-24</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#undefined"><span class="toc-number">2.</span> <span class="toc-text">注：因为这次作业和上次作业写重复了。所以我就补充说明一下。全部写在前面了。</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、-过程整理"><span class="toc-number"></span> <span class="toc-text">一、 过程整理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、-关于系统调用"><span class="toc-number"></span> <span class="toc-text">二、 关于系统调用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-软中断-中断-和系统调用"><span class="toc-number">1.</span> <span class="toc-text">1.软中断 中断 和系统调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-系统调用的过程（源码分析）"><span class="toc-number">2.</span> <span class="toc-text">2.系统调用的过程（源码分析）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-API函数的实现"><span class="toc-number">3.</span> <span class="toc-text">3.API函数的实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、总结"><span class="toc-number"></span> <span class="toc-text">三、总结</span></a>
+		</div>
+		
+		<h4 id="朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><a href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000" class="headerlink" title="朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000"></a>朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程<a href="http://mooc.study.163.com/course/USTC-1000029000" target="_blank" rel="external">http://mooc.study.163.com/course/USTC-1000029000</a></h4><h4>注：因为这次作业和上次作业写重复了。所以我就补充说明一下。全部写在前面了。</h4>
+
+<p>API实现的系统调用流程图：</p>
+<div style="margin:0 auto;text-align:center;width:100%"><br><br><img src="/linux5/lab1.png"><br><br></div>
+
+<p>具体的系统调用处理过程：</p>
+<div style="margin:0 auto;text-align:center;width:100%"><br><br><img src="/linux5/lab2.png"><br><br></div>
+
+<p>两个小问题：</p>
+<ul>
+<li>是如何找到系统调用处理函数的？</li>
+</ul>
+<p>中断门。</p>
+<p>在trap_init（）<br>里面有一句 set_system_trap_gate(SYSCALL_VECTOR, &amp;system_call);</p>
+<p>设置系统中断门。</p>
+<p>这里会形成IDT表项。</p>
+<p>里面记录了系统段的选择子以及偏移量。</p>
+<p>并且IDT具体的服务函数是和根据中断号相关的。</p>
+<p>通过IDT基地址+8*中断号</p>
+<p>然后找到中断服务函数（例如：system_call ）</p>
+<ul>
+<li>参数传递</li>
+</ul>
+<p>SYSCALL_DEFINEx</p>
+<p>例如调用 getpid()</p>
+<p>SYSCALL_DEFINE0(getpid)</p>
+<p>这里x就是参数个数。</p>
+<p>为什么要这样解释是他要做一些参数格式的转换。</p>
+<h3 id="一、-过程整理"><a href="#一、-过程整理" class="headerlink" title="一、 过程整理"></a>一、 过程整理</h3><p>我这里使用的系统调用是getpid() 用于获取当前的进程id，系统调用号是20（0x14）</p>
+<p>直接截图：</p>
+<ul>
+<li>使用库函数进行系统调用：</li>
+</ul>
+<div style="margin:0 auto;text-align:center;width:100%"><br><br><img src="/linux4/lab1.png"><br><br></div>
+
+<p>运行:</p>
+<div style="margin:0 auto;text-align:center;width:100%"><br><br><img src="/linux4/lab2.png"><br><br></div>
+
+<ul>
+<li>使用内嵌汇编系统调用：</li>
+</ul>
+<div style="margin:0 auto;text-align:center;width:100%"><br><br><img src="/linux4/lab3.png"><br><br></div>
+
+<p>运行：</p>
+<div style="margin:0 auto;text-align:center;width:100%"><br><br><img src="/linux4/lab4.png"><br><br></div>
+
+<p>（注：这里获取的pid是肯定不一样的，因为每次运行程序都会分配一个）</p>
+<h3 id="二、-关于系统调用"><a href="#二、-关于系统调用" class="headerlink" title="二、 关于系统调用"></a>二、 关于系统调用</h3><h4 id="1-软中断-中断-和系统调用"><a href="#1-软中断-中断-和系统调用" class="headerlink" title="1.软中断 中断 和系统调用"></a>1.软中断 中断 和系统调用</h4><p>首先系统调用是一种特殊的中断，是程序或者说是用户主动进行向内核请求服务的</p>
+<p>硬件中断是一种电信号，当设备有某种事件发生时，它就会产生中断，通过总线把电信号发送给中断控制器。<br>如果中断的线是激活的，中断控制器就把电信号发送给处理器的某个特定引脚。处理器于是立即停止自己正在做的事，<br>跳到中断处理程序的入口点，进行中断处理。</p>
+<p>但是我之前一直没分清楚软中断和系统调用的区别,<br>我又查了一下，觉得可能是这样的。</p>
+<p>软中断是一种机制，由软件模拟中断<strong>信号</strong>主动申请来访问内核的服务，让内核帮助处理一些操作。</p>
+<p>系统调用是一种具体的实现，可以由用户主动发出。</p>
+<p>程序异常也是一种软中断，比如说缺页异常。</p>
+<p>中断下半段的处理也是通过软中断实现的，通过ksoftirqd内核线程去处理未完成的操作</p>
+<h4 id="2-系统调用的过程（源码分析）"><a href="#2-系统调用的过程（源码分析）" class="headerlink" title="2.系统调用的过程（源码分析）"></a>2.系统调用的过程（源码分析）</h4><p>在/linux-3.18.6/arch/x86/kernel/traps.c中 有系统调用的初始化：</p>
+<pre><code>set_system_trap_gate(SYSCALL_VECTOR, &amp;system_call);
+</code></pre><p>调用<strong>trap_init()</strong>就会执行到这里。其中<strong>SYSCALL_VECTOR  = 0x80</strong> 因此我们就是通过 INT  0x80触发系统调用的。</p>
+<p>系统调用时的处理函数是<strong>asmlinkage int system_call(void);</strong></p>
+<p> system_call 具体的实现在内核加载的时候就已经加载到内存中了。</p>
+<p>在/linux-3.18.6/arch/x86/kernel/entry_32.S 中 有system_call的实现：</p>
+<pre><code>ENTRY(system_call)
+...
+
+SAVE_ALL
+
+....
+
+cmpl $(NR_syscalls), %eax
+...
+syscall_call:
+    call *sys_call_table(,%eax,4)
+syscall_after_call:
+    ....
+syscall_exit:jne syscall_exit_work
+    ....
+
+restore_all:
+    TRACE_IRQS_IRET
+restore_all_notrace:
+.....
+restore_nocheck:
+    RESTORE_REGS 4            # skip orig_eax/error_code
+...
+ENDPROC(system_call)
+</code></pre><p>实现可以分为三步看：</p>
+<p><strong>1.保存现场，通用寄存器</strong></p>
+<p>在硬件做完对 esp，eip ，eflags保存之后</p>
+<p>我们可以清晰的看到 linux system_call 对 其他寄存器的保存 —- <strong>SAVE_ALL</strong></p>
+<p>SAVE_ALL 的实现在文件最开始的地方：</p>
+<pre><code>.macro SAVE_ALL
+cld
+PUSH_GS
+pushl_cfi %fs
+/*CFI_REL_OFFSET fs, 0;*/
+pushl_cfi %es
+/*CFI_REL_OFFSET es, 0;*/
+pushl_cfi %ds
+/*CFI_REL_OFFSET ds, 0;*/
+pushl_cfi %eax
+CFI_REL_OFFSET eax, 0
+pushl_cfi %ebp 
+....(省略)
+</code></pre><p><strong>2.获取系统调用号（没注意到参数在哪里获取？）</strong></p>
+<pre><code>cmpl $(NR_syscalls), %eax 
+</code></pre><p>应该是比较系统调用号看是否存在吧</p>
+<pre><code>call *sys_call_table(,%eax,4)
+</code></pre><p>通过系统调用表跳转到具体的系统调用</p>
+<p><strong>3.恢复现场并退出中断</strong></p>
+<pre><code>syscall_exit:jne syscall_exit_work
+</code></pre><p>跳转到 <strong>syscall_exit_work</strong> 处理<br>最后一句是跳转到 jmp <strong>resume_userspace</strong> </p>
+<p><strong>resume_userspace</strong> 最后一句是jmp <strong>restore_all</strong> </p>
+<p>（<strong>注：这里无意中发现了  jmp restore_all之前会进行jne work_pending，这里会设置need_resched 判断调度！</strong>）</p>
+<p>然后发现<strong>RESTORE_ALL</strong> 这个宏实际上是不存在的！</p>
+<p><strong>restore_all</strong> 只执行了 TRACE_IRQS_IRET 用来判断中断是否关闭，若是关闭便打开</p>
+<p>然后顺序执行 <strong>restore_all_notrace:</strong> 关键的 <strong>RESTORE_REGS</strong>  4</p>
+<p>这才是真正的恢复现场！</p>
+<pre><code>.macro RESTORE_INT_REGS
+    popl_cfi %ebx
+    CFI_RESTORE ebx
+    popl_cfi %ecx
+    CFI_RESTORE ecx
+    popl_cfi %edx
+    CFI_RESTORE edx
+    popl_cfi %esi
+    CFI_RESTORE esi
+    popl_cfi %edi
+    CFI_RESTORE edi
+    popl_cfi %ebp
+    CFI_RESTORE ebp
+    popl_cfi %eax
+    CFI_RESTORE eax
+.endm
+.macro RESTORE_REGS pop=0
+    RESTORE_INT_REGS
+...
+</code></pre><p>over        </p>
+<h4 id="3-API函数的实现"><a href="#3-API函数的实现" class="headerlink" title="3.API函数的实现"></a>3.API函数的实现</h4><p>简要说明下：</p>
+<p>所有api函数都可以在<br>linux-3.18.6/arch/x86/syscalls/syscall_32.tbl 找到对应的系统调用处理函数<br>如：reboot - &gt; sys_reboot</p>
+<p>这些函数的绝大多数实现都在linux-3.18.6/kernel/sys.c</p>
+<p>之前系统调用在内核中的入口也都是sys_xxx<br>现在都改为SYSCALL_DEFINE定义的了</p>
+<p>具体请看：Linux系统调用之SYSCALL_DEFINE(<a href="http://blog.csdn.net/hxmhyp/article/details/22699669" target="_blank" rel="external">http://blog.csdn.net/hxmhyp/article/details/22699669</a>)</p>
+<h3 id="三、总结"><a href="#三、总结" class="headerlink" title="三、总结"></a>三、总结</h3><p>三层皮只是系统调用通过API实现的时候才会有的，封装例程包装了系统调用。但是实际上我们用内嵌汇编实现，和三层皮是没什么关系的。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/linux/">linux</a><a href="/tags/linux内核/">linux内核</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/linux内核分析/">linux内核分析</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2016/03/31/Linux_45/" data-title="Linux内核分析4：两种方式使用同一个系统调用 | Sip 的 solo" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/03/31/Linux_3/" title="Linux内核分析作业3：跟踪分析Linux内核的启动过程">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Linux内核分析作业3：跟踪分析Linux内核的启动过程</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/31/Linux_6/"  title="Linux内核分析作业6：分析Linux内核创建一个新进程的过程">
+ <strong>NEXT:</strong><br/> 
+ <span>Linux内核分析作业6：分析Linux内核创建一个新进程的过程
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#朋翔-原创作品转载请注明出处《Linux内核分析》MOOC课程http-mooc-study-163-com-course-USTC-1000029000"><span class="toc-number">1.</span> <span class="toc-text">朋翔 原创作品转载请注明出处《Linux内核分析》MOOC课程http://mooc.study.163.com/course/USTC-1000029000</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#undefined"><span class="toc-number">2.</span> <span class="toc-text">注：因为这次作业和上次作业写重复了。所以我就补充说明一下。全部写在前面了。</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一、-过程整理"><span class="toc-number"></span> <span class="toc-text">一、 过程整理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#二、-关于系统调用"><span class="toc-number"></span> <span class="toc-text">二、 关于系统调用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-软中断-中断-和系统调用"><span class="toc-number">1.</span> <span class="toc-text">1.软中断 中断 和系统调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-系统调用的过程（源码分析）"><span class="toc-number">2.</span> <span class="toc-text">2.系统调用的过程（源码分析）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-API函数的实现"><span class="toc-number">3.</span> <span class="toc-text">3.API函数的实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三、总结"><span class="toc-number"></span> <span class="toc-text">三、总结</span></a>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/linux内核分析/" title="linux内核分析">linux内核分析<sup>9</sup></a></li>
+		
+			<li><a href="/categories/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/linux/" title="linux">linux<sup>9</sup></a></li>
+		
+			<li><a href="/tags/linux内核/" title="linux内核">linux内核<sup>3</sup></a></li>
+		
+			<li><a href="/tags/动漫/" title="动漫">动漫<sup>6</sup></a></li>
+		
+			<li><a href="/tags/手绘/" title="手绘">手绘<sup>6</sup></a></li>
+		
+			<li><a href="/tags/技术调研/" title="技术调研">技术调研<sup>1</sup></a></li>
+		
+			<li><a href="/tags/测试/" title="测试">测试<sup>1</sup></a></li>
+		
+			<li><a href="/tags/通信协议/" title="通信协议">通信协议<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="null" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="Sip Pi">Sip Pi</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>
