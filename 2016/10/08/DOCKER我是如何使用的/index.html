@@ -77,7 +77,7 @@ docker run -v ~/go_workplace/:/go_workplace --restart=always -t -d -i golang/iri
     </p>
   <p class="article-time">
     <time datetime="2016-10-07T16:03:21.000Z" itemprop="datePublished">2016-10-08</time>
-    更新日期:<time datetime="2016-10-07T16:33:35.262Z" itemprop="dateModified">2016-10-08</time>
+    更新日期:<time datetime="2016-11-07T16:44:39.520Z" itemprop="dateModified">2016-11-08</time>
     
   </p>
 </header>
@@ -104,9 +104,19 @@ docker run -v ~/go_workplace/:/go_workplace --restart=always -t -d -i golang/iri
 </ul>
 <p><code>ctrl +p &amp;&amp; ctrl + q</code> 可以退出。</p>
 <ul>
-<li><p><code>docker export 7691a814370e &gt; golang.tar</code><br>导出 docker image</p>
-</li>
+<li><code>docker export 7691a814370e &gt; golang.tar</code></li>
+</ul>
+<p>导出（ exported-imported)docker image 的会丢失历史层。</p>
+<p>但是通过saveed-loaded可以回滚到层次里。</p>
+<p>可以通过<code>docker history 看到层次变化也可以 根据层次运行东西</code></p>
+<ul>
 <li><p><code>cat golang.tar | sudo docker import - golang/iris:1.0</code></p>
+</li>
+<li><p>docker cp 可以直接拷贝文件到 docker 容器之中</p>
+</li>
+<li><p>docker run中有–net=host表示使用主机一样的文件，但是会有安全风险。默认是bridge</p>
+</li>
+<li><p>docker  </p>
 </li>
 </ul>
   
@@ -137,6 +147,14 @@ docker run -v ~/go_workplace/:/go_workplace --restart=always -t -d -i golang/iri
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2016/10/09/接口中心/" title="">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  (no title)</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2016/09/30/第一次发版本总结/"  title="第一次发版本总结">
@@ -176,6 +194,8 @@ docker run -v ~/go_workplace/:/go_workplace --restart=always -t -d -i golang/iri
 		
 			<li><a href="/categories/技术分享和记录/" title="技术分享和记录">技术分享和记录<sup>1</sup></a></li>
 		
+			<li><a href="/categories/电影/" title="电影">电影<sup>1</sup></a></li>
+		
 		</ul>
 </div>
 
@@ -201,7 +221,11 @@ docker run -v ~/go_workplace/:/go_workplace --restart=always -t -d -i golang/iri
 		
 			<li><a href="/tags/异步/" title="异步">异步<sup>1</sup></a></li>
 		
-			<li><a href="/tags/总结/" title="总结">总结<sup>1</sup></a></li>
+			<li><a href="/tags/影评/" title="影评">影评<sup>1</sup></a></li>
+		
+			<li><a href="/tags/总结/" title="总结">总结<sup>2</sup></a></li>
+		
+			<li><a href="/tags/感想/" title="感想">感想<sup>1</sup></a></li>
 		
 			<li><a href="/tags/手绘/" title="手绘">手绘<sup>6</sup></a></li>
 		
@@ -220,8 +244,6 @@ docker run -v ~/go_workplace/:/go_workplace --restart=always -t -d -i golang/iri
 			<li><a href="/tags/通信协议/" title="通信协议">通信协议<sup>1</sup></a></li>
 		
 			<li><a href="/tags/金融/" title="金融">金融<sup>1</sup></a></li>
-		
-			<li><a href="/tags/高并发/" title="高并发">高并发<sup>1</sup></a></li>
 		
 		</ul>
 </div>
@@ -249,7 +271,7 @@ docker run -v ~/go_workplace/:/go_workplace --restart=always -t -d -i golang/iri
 		
 		
 	</div>
-		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2017 
 		
 		<a href="http://yoursite.com" target="_blank" title="Sip Pi">Sip Pi</a>
 		
