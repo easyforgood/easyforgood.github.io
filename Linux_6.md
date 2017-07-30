@@ -34,9 +34,9 @@ tagline:
 简单总结一下和 进程管理、内存管理、文件系统有关的主要部分:
 
 1.  进程状态 
-		
-		volatile long state;  
-		int exit_state;
+    ​	
+    	volatile long state;  
+    	int exit_state;
 
 这张图很经典：
 
@@ -44,58 +44,63 @@ tagline:
 
 2. 进程标识符
 
-		/*一般情况 32768 个进程*/
-		pid_t pid;  
-		/*线程组的领头线程 getpid()返回值*/
-		pid_t tgid;  
+   ```c
+   /*一般情况 32768 个进程*/
+   pid_t pid;  
+   /*线程组的领头线程 getpid()返回值*/
+   pid_t tgid;  
+   ```
 
 3. 进程调度 
-		
-		/* prio用于保存动态优先级 static_prio静态优先级 normal_prio的值取决于静态优先级和调度策略*/
-		int prio, static_prio, normal_prio; 
-		/*实时优先级*/ 
-		unsigned int rt_priority;  
-		/*调度类*/
-		const struct sched_class *sched_class;  
-		？/*普通进程调用实体*/
-		struct sched_entity se;
-		？/*实时进程调用实体*/  
-		struct sched_rt_entity rt;  
-		/*调度策略*/
-		unsigned int policy;  
-		/*控制进程可以在哪里处理器上运行*/
-		cpumask_t cpus_allowed; 	
+   ​	
+   ```c
+   /* prio用于保存动态优先级 static_prio静态优先级 normal_prio的值取决于静态优先级和调度策略*/
+   int prio, static_prio, normal_prio; 
+   /*实时优先级*/ 
+   unsigned int rt_priority;  
+   /*调度类*/
+   const struct sched_class *sched_class;  
+   ？/*普通进程调用实体*/
+   struct sched_entity se;
+   ？/*实时进程调用实体*/  
+   struct sched_rt_entity rt;  
+   /*调度策略*/
+   unsigned int policy;  
+   /*控制进程可以在哪里处理器上运行*/
+   cpumask_t cpus_allowed; 	
+   ```
 
-3. 进程内核栈
+4. 进程内核栈
 
-		/*指向下面的内核栈结构体的“栈底”*/
-		void *stack;
-		
-		/*内核栈结构体*/
-		union thread_union {  
-			    struct thread_info thread_info;  
-				unsigned long stack[THREAD_SIZE/sizeof(long)];  //内核栈大小为THREAD_SIZE 一般为8K
-		};  
+   ```c
+   /*指向下面的内核栈结构体的“栈底”*/
+   void *stack;
 
-	![enter image description here](http://blog.chinaunix.net/attachment/201111/4/20543672_13203954065UzM.jpeg)
+   /*内核栈结构体*/
+   union thread_union {  
+   	    struct thread_info thread_info;  
+   		unsigned long stack[THREAD_SIZE/sizeof(long)];  //内核栈大小为THREAD_SIZE 一般为8K
+   };  
+   ```
 
-4. 进程地址空间 
-		
-			/*mm指向进程所拥有的内存描述符。active_mm表示所使用的内存描述符*/
-			struct mm_struct *mm, *active_mm;
-			/*记录堆栈随机化的信息，为了安全引入的*/
-			unsigned brk_randomized:1;
-			/*进程缓存相关*/
-			struct task_rss_stat	rss_stat;
+   ![enter image description here](http://blog.chinaunix.net/attachment/201111/4/20543672_13203954065UzM.jpeg)
 
-5.  文件
+5. 进程地址空间 
+   		/*mm指向进程所拥有的内存描述符。active_mm表示所使用的内存描述符*/
+   		struct mm_struct *mm, *active_mm;
+   		/*记录堆栈随机化的信息，为了安全引入的*/
+   		unsigned brk_randomized:1;
+   		/*进程缓存相关*/
+   		struct task_rss_stat	rss_stat;
 
-		/* 和文件系统相关的信息*/  
-	    int link_count, total_link_count;  
-		/* 进程当前和跟目录 */  
-	    struct fs_struct *fs;  
-		/* 已打开文件表*/  
-	    struct files_struct *files;  
+6. 文件
+
+   	/* 和文件系统相关的信息*/  
+   	int link_count, total_link_count;  
+   	/* 进程当前和跟目录 */  
+   	struct fs_struct *fs;  
+   	/* 已打开文件表*/  
+   	struct files_struct *files;  
 
 
 ###三、 创建一个新进程的过程
