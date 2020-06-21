@@ -21,9 +21,12 @@ jobs:
           name: Install NPM packages
           command: yarn install
       - save_cache:
-          key: node-cache-{{ checksum "package-lock.json" }}
+          key: node-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
+      - run:
+          name: Remove deploy_git
+          command: rm -rf .deploy_git
       - run:
           name: Generate blog
           command: hexo generate
