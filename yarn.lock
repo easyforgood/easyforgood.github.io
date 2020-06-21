@@ -1051,7 +1051,7 @@ hexo-util@^1.4.0, hexo-util@^1.9.1:
 
 hexo@^4.2.1:
   version "4.2.1"
-  resolved "https://registry.npm.taobao.org/hexo/download/hexo-4.2.1.tgz#2aa1d4428b0ade23bac34f546a387b36432dd81c"
+  resolved "https://registry.npm.taobao.org/hexo/download/hexo-4.2.1.tgz?cache=0&sync_timestamp=1589473495839&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fhexo%2Fdownload%2Fhexo-4.2.1.tgz#2aa1d4428b0ade23bac34f546a387b36432dd81c"
   dependencies:
     abbrev "^1.1.1"
     archy "^1.0.0"
