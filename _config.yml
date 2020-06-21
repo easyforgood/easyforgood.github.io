@@ -80,7 +80,7 @@ theme: pacman
 deploy:
   type: git
   repo:  git@github.com:easyforgood/easyforgood.github.io.git
-  branch: master 
+  branch: gh-pages 
   message: " {{ now('YYYY-MM-DD HH:mm:ss') }} by hexo deploy"
 
 stylus:
