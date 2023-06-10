@@ -1,0 +1,71 @@
+baseURL = 'https://siporange.me'
+languageCode = 'en-us'
+title = 'My New Hugo Site'
+theme = 'hugo-blog-awesome'
+[markup]
+  [markup.highlight]
+    noClasses = false
+  [markup.goldmark.renderer]
+    unsafe = true
+
+[menu]
+  [[menu.main]]
+    # The page reference (pageRef) is useful for menu highlighting
+    # When pageRef is set, setting `url` is optional; it will be used as a fallback if the page is not found.
+    pageRef="/"
+    name = 'Home'
+    url = '/'
+    weight = 10
+  [[menu.main]]
+    pageRef="posts"
+    name = 'Posts'
+    url = '/posts/'
+    weight = 20
+  [[menu.main]]
+    pageRef="about"
+    name = 'About'
+    url = '/about/'
+    weight = 30
+
+[params]
+  sitename = "Sip"
+  defaultColor = "dark" # set color mode: dark, light, auto
+  # Setting it to 'auto' applies the color scheme based on the visitor's device color preference.If you don't specify anything, ignore this parameter, or leave it blank,
+  # the default value is set to 'auto'.
+  # You can take a look at layouts/index.html for more information.
+  description = "sip's blog"
+  mainSections = ['posts']
+  toc = true # set to false to disable table of contents 'globally'
+  goToTop = true # set to false to disable 'go to top' button
+  # Will try to load 'assets/js/custom.js' and 'assets/js/custom-2.js'.
+  # Your custom scripts will be concatinated to one file `custom.js`.
+  # When building for production it will be minified.
+  # The file `custom.js` is loaded on each page (before body tag ends).
+
+[params.author]
+  avatar = "avatar.jpg" # put the file in assets folder; also ensure that image has same height and width
+  # Note: image is not rendered if the resource(avatar image) is not found. No error is displayed.
+  intro = "Sip'x Blog"
+  name = "Sip.x"
+  description = "ずっと真夜中でいいのに"
+
+[params.browserconfig]
+  TileColor = "#2d89ef" # default windows 10 blue tile color
+
+[[params.socialIcons]]
+name = "github"
+url = "https://github.com/easyforgood"
+
+[[params.socialIcons]]
+name = "twitter"
+url = "https://twitter.com"
+
+[[params.socialIcons]]
+name = "Rss"
+url = "index.xml"
+
+[tableOfContents]
+startLevel = 2 # ToC starts from H2
+endLevel = 4 # ToC ends at H4
+ordered = false # generates <ul> instead of <ol>
+
