@@ -1,0 +1,3 @@
+[submodule "themes/sip-hugo-theme"]
+	path = themes/sip-hugo-theme
+	url = https://github.com/easyforgood/hugo-theme
