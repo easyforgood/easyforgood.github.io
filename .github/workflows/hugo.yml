@@ -49,7 +49,7 @@ jobs:
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
       - name: Check current directory
-        run: "ls -l"
+        run: "ls -l && ls -l ./themes"
       - name: Build with Hugo
         env:
           # For maximum backward compatibility with Hugo modules
